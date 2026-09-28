@@ -1,0 +1,30 @@
+{
+  "name": "webmcp-cli",
+  "version": "0.1.0",
+  "description": "Command-line interface to audit, scan, and manage WebMCP tools",
+  "type": "module",
+  "bin": {
+    "webmcp": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@webmcp/core": "*",
+    "@webmcp/sdk": "*",
+    "boxen": "^8.0.1",
+    "chalk": "^5.4.1",
+    "cli-table3": "^0.6.5",
+    "commander": "^13.0.0",
+    "ora": "^8.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}

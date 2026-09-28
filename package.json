@@ -1,0 +1,28 @@
+{
+  "name": "webmcp-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebMCP Developer Toolkit, Scanner & CLI Monorepo",
+  "workspaces": [
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "build:core": "npm run --workspace=@webmcp/core build",
+    "build:sdk": "npm run --workspace=@webmcp/sdk build",
+    "build:cli": "npm run --workspace=webmcp-cli build",
+    "build": "npm run build:core && npm run build:sdk && npm run build:cli",
+    "dev": "npm run --workspaces --if-present dev",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b",
+    "clean": "rm -rf packages/*/dist node_modules packages/*/node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8",
+    "zod": "^3.24.1"
+  }
+}
