@@ -2,41 +2,69 @@ import { DiscoveredTool } from '../types/index.js';
 
 export interface PageEvaluationData {
   hasNavigatorModelContext: boolean;
+  hasDocumentModelContext: boolean;
+  hasOriginTrial: boolean;
   rawTools: any[];
 }
 
 /**
- * Script evaluated inside the browser page context to inspect navigator.modelContext
+ * Script evaluated inside the browser page context to inspect modelContext
+ * (supporting both navigator.modelContext and document.modelContext)
  * and extract all registered WebMCP tools safely.
  */
 export function evaluatePageWebMCP(): PageEvaluationData {
   const win = window as any;
   const nav = win.navigator;
+  const doc = win.document;
 
-  const hasNavigatorModelContext = typeof nav !== 'undefined' && 'modelContext' in nav && !!nav.modelContext;
+  const hasNativeNav = typeof nav !== 'undefined' && 'modelContext' in nav && !!nav.modelContext;
+  const hasNativeDoc = typeof doc !== 'undefined' && 'modelContext' in doc && !!doc.modelContext;
 
-  if (!hasNavigatorModelContext) {
-    return {
-      hasNavigatorModelContext: false,
-      rawTools: [],
-    };
-  }
-
-  let toolsList: any[] = [];
-
+  // Check for WebMCP origin trial meta tag
+  let hasOriginTrial = false;
   try {
-    if (typeof nav.modelContext.getRegisteredTools === 'function') {
-      const registered = nav.modelContext.getRegisteredTools();
-      if (Array.isArray(registered)) {
-        toolsList = registered;
+    const metaTags = doc ? doc.querySelectorAll('meta[http-equiv="origin-trial"]') : [];
+    for (const tag of metaTags) {
+      const content = tag.getAttribute('content') || '';
+      if (content.length > 0) {
+        hasOriginTrial = true;
+        break;
       }
     }
-  } catch (err) {
-    // If calling getRegisteredTools throws, preserve flag but return empty list
-  }
+  } catch {}
+
+  const toolsMap = new Map<string, any>();
+
+  // Extract from navigator.modelContext
+  try {
+    if (nav?.modelContext?.getRegisteredTools) {
+      const registered = nav.modelContext.getRegisteredTools();
+      if (Array.isArray(registered)) {
+        for (const t of registered) {
+          if (t && t.name) toolsMap.set(t.name, t);
+        }
+      }
+    }
+  } catch {}
+
+  // Extract from document.modelContext (Chrome Origin Trial standard)
+  try {
+    if (doc?.modelContext?.getRegisteredTools) {
+      const registered = doc.modelContext.getRegisteredTools();
+      if (Array.isArray(registered)) {
+        for (const t of registered) {
+          if (t && t.name && !toolsMap.has(t.name)) {
+            toolsMap.set(t.name, t);
+          }
+        }
+      }
+    }
+  } catch {}
+
+  const rawToolsList = Array.from(toolsMap.values());
 
   // Safely serialize tool objects to avoid non-serializable properties (e.g. functions, circular DOM nodes)
-  const sanitizedTools = toolsList.map((tool) => {
+  const sanitizedTools = rawToolsList.map((tool) => {
     if (!tool || typeof tool !== 'object') {
       return null;
     }
@@ -50,9 +78,16 @@ export function evaluatePageWebMCP(): PageEvaluationData {
     };
   }).filter(Boolean);
 
+  const siteActivelyRegistered = !!win.__webmcp_site_invoked_registration || sanitizedTools.length > 0;
+  const isBridgeInjected = !!win.__webmcp_bridge_injected;
+  const siteProvidedNativeContext = (hasNativeNav || hasNativeDoc) && !isBridgeInjected;
+  const hasWebMCP = siteActivelyRegistered || siteProvidedNativeContext || hasOriginTrial;
+
   return {
-    hasNavigatorModelContext: true,
-    rawTools: sanitizedTools,
+    hasNavigatorModelContext: hasWebMCP,
+    hasDocumentModelContext: hasNativeDoc,
+    hasOriginTrial,
+    rawTools: siteActivelyRegistered ? sanitizedTools : [],
   };
 }
 

@@ -75,6 +75,52 @@ export class PlaywrightScanner {
         isMobile: options.isMobile ?? false,
       });
 
+      // Inject WebMCP Agent Bridge so sites checking document.modelContext or navigator.modelContext can register tools
+      await context.addInitScript(() => {
+        const win = window as any;
+        const globalTools = new Map();
+
+        win.__webmcp_site_invoked_registration = false;
+        win.__webmcp_bridge_injected = true;
+
+        const bridge = {
+          registerTool(tool: any) {
+            win.__webmcp_site_invoked_registration = true;
+            if (tool && tool.name) {
+              globalTools.set(tool.name, tool);
+            }
+          },
+          unregisterTool(name: string) {
+            globalTools.delete(name);
+          },
+          getRegisteredTools() {
+            return Array.from(globalTools.values());
+          },
+        };
+
+        try {
+          const doc = typeof document !== 'undefined' ? (document as any) : null;
+          if (doc && !doc.modelContext) {
+            Object.defineProperty(doc, 'modelContext', {
+              value: bridge,
+              writable: true,
+              configurable: true,
+            });
+          }
+        } catch {}
+
+        try {
+          const nav = typeof navigator !== 'undefined' ? (navigator as any) : null;
+          if (nav && !nav.modelContext) {
+            Object.defineProperty(nav, 'modelContext', {
+              value: bridge,
+              writable: true,
+              configurable: true,
+            });
+          }
+        } catch {}
+      });
+
       page = await context.newPage();
       page.setDefaultTimeout(timeoutMs);
 
@@ -84,20 +130,15 @@ export class PlaywrightScanner {
         timeout: timeoutMs,
       });
 
-      // Wait for SPA hydration: wait for navigator.modelContext and registered tools
+      // Wait for SPA hydration: wait for registered tools in navigator or document modelContext
       try {
         await page.waitForFunction(
           () => {
-            const nav = window.navigator as any;
-            if (typeof nav === 'undefined' || !('modelContext' in nav) || !nav.modelContext) {
-              return false;
-            }
-            try {
-              const tools = nav.modelContext.getRegisteredTools?.();
-              return Array.isArray(tools) && tools.length > 0;
-            } catch {
-              return true;
-            }
+            const win = window as any;
+            const navTools = win.navigator?.modelContext?.getRegisteredTools?.();
+            const docTools = win.document?.modelContext?.getRegisteredTools?.();
+            const total = (Array.isArray(navTools) ? navTools.length : 0) + (Array.isArray(docTools) ? docTools.length : 0);
+            return total > 0;
           },
           undefined,
           { timeout: hydrationWaitMs }
