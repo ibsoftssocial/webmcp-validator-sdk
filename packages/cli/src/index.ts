@@ -3,8 +3,8 @@ import { Command } from 'commander';
 const program = new Command();
 
 program
-  .name('webmcp')
-  .description('Audit, scan, and manage WebMCP tools on websites')
+  .name('webmcp-validator')
+  .description('Audit, scan, and validate WebMCP tools on websites')
   .version('0.1.0');
 
 program

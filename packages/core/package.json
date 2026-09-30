@@ -1,5 +1,5 @@
 {
-  "name": "@webmcp/core",
+  "name": "@webmcp-validator/core",
   "version": "0.1.0",
   "description": "Core engine, types, validator, and scoring for WebMCP",
   "type": "module",

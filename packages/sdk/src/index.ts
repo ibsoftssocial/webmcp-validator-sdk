@@ -1,11 +1,11 @@
-export * from '@webmcp/core';
+export * from '@webmcp-validator/core';
 
 /**
- * Public WebMCP SDK API entry point
+ * Public WebMCP Validator SDK entry point
  */
-export class WebMCP {
+export class WebMCPValidator {
   /**
-   * Version of the WebMCP SDK
+   * Version of the WebMCP Validator SDK
    */
   static readonly version = '0.1.0';
 
@@ -13,7 +13,7 @@ export class WebMCP {
    * Scan and audit a target URL for WebMCP readiness
    */
   static async audit(url: string) {
-    // Placeholder to be implemented in Milestone 2 & 3
+    // Implemented in Milestones 2 & 3
     return {
       url,
       score: 0,
@@ -21,3 +21,8 @@ export class WebMCP {
     };
   }
 }
+
+/**
+ * Convenience alias for WebMCPValidator
+ */
+export const WebMCP = WebMCPValidator;

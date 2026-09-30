@@ -1,16 +1,16 @@
 {
-  "name": "webmcp-monorepo",
+  "name": "webmcp-validator-monorepo",
   "version": "0.1.0",
   "private": true,
-  "description": "WebMCP Developer Toolkit, Scanner & CLI Monorepo",
+  "description": "WebMCP Validator Developer Toolkit, Scanner & CLI Monorepo",
   "workspaces": [
     "packages/*"
   ],
   "type": "module",
   "scripts": {
-    "build:core": "npm run --workspace=@webmcp/core build",
-    "build:sdk": "npm run --workspace=@webmcp/sdk build",
-    "build:cli": "npm run --workspace=webmcp-cli build",
+    "build:core": "npm run --workspace=@webmcp-validator/core build",
+    "build:sdk": "npm run --workspace=webmcp-validator-sdk build",
+    "build:cli": "npm run --workspace=webmcp-validator-cli build",
     "build": "npm run build:core && npm run build:sdk && npm run build:cli",
     "dev": "npm run --workspaces --if-present dev",
     "test": "vitest run",

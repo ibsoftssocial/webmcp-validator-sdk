@@ -1,6 +1,6 @@
-# WebMCP Toolkit & CLI Monorepo
+# WebMCP Validator Toolkit & CLI Monorepo
 
-> **A developer toolkit to scan, audit, discover, and validate WebMCP implementations on websites.**
+> **A developer toolkit and SDK to scan, audit, discover, and validate WebMCP implementations on websites.**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Vitest](https://img.shields.io/badge/tested_with-Vitest-yellow.svg)](https://vitest.dev/)
@@ -13,9 +13,9 @@
 
 | Package | Version | Description |
 |---|---|---|
-| [`@webmcp/core`](./packages/core) | `0.1.0` | Core engine, Zod types, schema validation, and deterministic scoring algorithm |
-| [`@webmcp/sdk`](./packages/sdk) | `0.1.0` | Programmatic Node.js / TypeScript SDK API (`WebMCP.audit(...)`) |
-| [`webmcp-cli`](./packages/cli) | `0.1.0` | Command-line scanner and reporter executable (`npx webmcp scan <url>`) |
+| [`webmcp-validator-sdk`](./packages/sdk) | `0.1.0` | Programmatic Node.js / TypeScript SDK API (`WebMCPValidator.audit(...)`) |
+| [`webmcp-validator-cli`](./packages/cli) | `0.1.0` | Command-line scanner and reporter executable (`npx webmcp-validator scan <url>`) |
+| [`@webmcp-validator/core`](./packages/core) | `0.1.0` | Core engine, Zod types, schema validation, and deterministic scoring algorithm |
 
 ---
 
@@ -44,13 +44,24 @@ npm test
 
 ```bash
 # Audit any website for WebMCP readiness
-npx webmcp scan https://example.com
+npx webmcp-validator scan https://example.com
 
 # Audit local development server with failure threshold for CI/CD
-npx webmcp scan http://localhost:3000 --fail-under=80
+npx webmcp-validator scan http://localhost:3000 --fail-under=80
 
 # Export audit to JSON report
-npx webmcp scan https://example.com --format=json --output=audit.json
+npx webmcp-validator scan https://example.com --format=json --output=audit.json
+```
+
+---
+
+## 💻 Programmatic SDK Usage
+
+```typescript
+import { WebMCPValidator } from 'webmcp-validator-sdk';
+
+const report = await WebMCPValidator.audit('http://localhost:3000');
+console.log(`Score: ${report.overallScore}/100`);
 ```
 
 ---
