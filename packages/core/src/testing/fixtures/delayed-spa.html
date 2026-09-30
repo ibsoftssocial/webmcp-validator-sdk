@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Delayed SPA Hydration Demo</title>
+  <meta name="description" content="Single Page Application simulation where tools register after a 500ms hydration delay.">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+    .loading { color: #f2994a; font-weight: bold; }
+    .ready { color: #27ae60; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>SPA App with Delayed Hydration</h1>
+  <p id="status-text" class="loading">⏳ Hydrating client-side bundle... (Tools registering in 500ms)</p>
+
+  <script>
+    if (!navigator.modelContext) {
+      const registeredTools = new Map();
+      navigator.modelContext = {
+        registerTool(tool) {
+          registeredTools.set(tool.name, tool);
+        },
+        unregisterTool(name) {
+          registeredTools.delete(name);
+        },
+        getRegisteredTools() {
+          return Array.from(registeredTools.values());
+        }
+      };
+    }
+
+    // Simulate React / Next.js component mounting delay
+    setTimeout(() => {
+      navigator.modelContext.registerTool({
+        name: 'spa_search',
+        description: 'Search dynamic single-page application items after client-side hydration.',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            q: { type: 'string', description: 'Search term' }
+          },
+          required: ['q']
+        },
+        annotations: {
+          readOnlyHint: true
+        }
+      });
+
+      const el = document.getElementById('status-text');
+      if (el) {
+        el.className = 'ready';
+        el.textContent = '✅ Hydration complete! WebMCP tool "spa_search" is now registered.';
+      }
+    }, 500);
+  </script>
+</body>
+</html>

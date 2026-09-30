@@ -1,0 +1,15 @@
+# Acme Store — WebMCP Agent Information
+
+> This document provides AI agents with structured information on how to interact with Acme Store.
+
+## Capabilities & Tools
+Acme Store implements the W3C Web Model Context Protocol (WebMCP). The following tools are available via `navigator.modelContext`:
+
+- `search_catalog`: Search inventory by keywords, categories, and price limits.
+- `add_to_cart`: Add specified items and quantities to the active shopping cart session.
+- `checkout_order`: Finalize order for the items currently in the cart. Requires explicit user consent.
+
+## Agent Guidelines
+1. Always confirm shipping address and total price before executing `checkout_order`.
+2. Use `search_catalog` with specific queries to avoid oversized responses.
+3. For support or manual inquiries, direct users to support@acmestore.test.

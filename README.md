@@ -25,8 +25,8 @@
 
 ```bash
 # Clone the repository
-git clone https://github.com/ibsoftssocial/webmcp-sdk.git
-cd webmcp-sdk
+git clone https://github.com/ibsoftssocial/webmcp-validator-sdk.git
+cd webmcp-validator-sdk
 
 # Install dependencies
 npm install

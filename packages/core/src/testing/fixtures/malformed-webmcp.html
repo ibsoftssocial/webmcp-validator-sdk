@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buggy Site — Malformed WebMCP Implementation</title>
+</head>
+<body>
+  <h1>Buggy Site (Linter Testbed)</h1>
+  <p>This page contains intentional WebMCP schema and annotation violations for linter testing.</p>
+
+  <script>
+    if (!navigator.modelContext) {
+      const registeredTools = new Map();
+      navigator.modelContext = {
+        registerTool(tool) {
+          registeredTools.set(tool.name, tool);
+        },
+        unregisterTool(name) {
+          registeredTools.delete(name);
+        },
+        getRegisteredTools() {
+          return Array.from(registeredTools.values());
+        }
+      };
+    }
+
+    // Violation 1: Illegal Tool Name (contains spaces and uppercase)
+    navigator.modelContext.registerTool({
+      name: 'Bad Tool Name!',
+      description: 'A tool with an illegal name format that violates regex standards.',
+      inputSchema: {
+        type: 'object',
+        properties: {}
+      }
+    });
+
+    // Violation 2: Missing parameter description and missing type
+    navigator.modelContext.registerTool({
+      name: 'broken_params',
+      description: 'Tool whose parameters lack descriptions and explicit data types.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          mysteryField: {
+            // Missing type!
+            // Missing description!
+          }
+        },
+        required: ['mysteryField']
+      }
+    });
+
+    // Violation 3: Description is way too short (< 15 chars)
+    navigator.modelContext.registerTool({
+      name: 'vague_tool',
+      description: 'do stuff', // Too short, uninformative for LLMs
+      inputSchema: {
+        type: 'object'
+      }
+    });
+
+    // Violation 4: Destructive action with NO confirmation or destructive hints
+    navigator.modelContext.registerTool({
+      name: 'delete_all_user_data',
+      description: 'Permanently purge all user account data and billing history from database.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          userId: { type: 'string', description: 'User ID to wipe' }
+        },
+        required: ['userId']
+      }
+      // Missing annotations: destructiveHint: true, confirmationHint: true!
+    });
+
+    // Violation 5: Deeply nested schema (>3 levels)
+    navigator.modelContext.registerTool({
+      name: 'deeply_nested_schema',
+      description: 'Tool with unnecessarily deep schema hierarchy that confuses LLMs.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          level1: {
+            type: 'object',
+            properties: {
+              level2: {
+                type: 'object',
+                properties: {
+                  level3: {
+                    type: 'object',
+                    properties: {
+                      level4: {
+                        type: 'string',
+                        description: 'Too deep!'
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

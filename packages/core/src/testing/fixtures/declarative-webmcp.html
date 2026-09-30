@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Declarative WebMCP Site</title>
+  <meta name="description" content="Site providing declarative WebMCP capabilities via static meta and link headers.">
+  <meta name="webmcp-version" content="1.0">
+  <link rel="model-context" type="application/json" href="/mcp/manifest.json">
+  <link rel="help" href="/llms.txt">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 50px auto; padding: 0 20px; line-height: 1.6; }
+    .badge { display: inline-block; background: #e8f0fe; color: #1a73e8; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Declarative WebMCP Portal</h1>
+  <span class="badge">Declarative Manifest Linked</span>
+  <p>This static site does not execute client-side JavaScript tool registrations. Instead, it advertises its capabilities via HTML <code>&lt;link rel="model-context"&gt;</code> and <code>&lt;meta name="webmcp-version"&gt;</code> tags.</p>
+</body>
+</html>

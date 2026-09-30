@@ -15,6 +15,7 @@
     "dev": "npm run --workspaces --if-present dev",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:server": "node --experimental-strip-types packages/core/src/testing/run-server.ts",
     "typecheck": "tsc -b",
     "clean": "rm -rf packages/*/dist node_modules packages/*/node_modules"
   },

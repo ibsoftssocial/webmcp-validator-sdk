@@ -1,0 +1,40 @@
+{
+  "$schema": "https://webmachinelearning.github.io/webmcp/schema/v1.json",
+  "version": "1.0.0",
+  "name": "Acme Store WebMCP Declarative Service",
+  "description": "Declarative WebMCP tools provided by Acme Store",
+  "tools": [
+    {
+      "name": "search_catalog",
+      "description": "Search store products by keyword and category",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Keywords to search in catalog"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of items to return"
+          }
+        },
+        "required": ["query"]
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_store_hours",
+      "description": "Get current operating hours and contact details",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "annotations": {
+        "readOnlyHint": true
+      }
+    }
+  ]
+}

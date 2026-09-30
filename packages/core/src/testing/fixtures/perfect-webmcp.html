@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acme Store — Perfect WebMCP Implementation</title>
+  <meta name="description" content="Reference site demonstrating a perfect W3C WebMCP implementation with full schemas and annotations.">
+  <link rel="model-context" type="application/json" href="/mcp/manifest.json">
+  <link rel="help" href="/llms.txt">
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 800px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #222; }
+    header { border-bottom: 2px solid #eaeaea; padding-bottom: 20px; margin-bottom: 30px; }
+    .status-badge { display: inline-block; background: #e6f4ea; color: #137333; padding: 4px 12px; border-radius: 16px; font-weight: 600; font-size: 0.9rem; }
+    .tool-card { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+    code { background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Acme Store (Demo)</h1>
+    <span class="status-badge" id="webmcp-status">WebMCP Active: 3 Tools Registered</span>
+  </header>
+
+  <main>
+    <h2>Agent Ready Shopping Experience</h2>
+    <p>This page exposes 3 high-quality WebMCP tools via <code>window.navigator.modelContext</code>.</p>
+
+    <div class="tool-card">
+      <h3>1. <code>search_catalog</code></h3>
+      <p>Search products by keyword and category with full descriptions and pagination limits.</p>
+    </div>
+
+    <div class="tool-card">
+      <h3>2. <code>add_to_cart</code></h3>
+      <p>Add specified items and quantities to the active session cart.</p>
+    </div>
+
+    <div class="tool-card">
+      <h3>3. <code>checkout_order</code></h3>
+      <p>Finalize and place the order. Marked with <code>destructiveHint</code> and <code>confirmationHint</code>.</p>
+    </div>
+  </main>
+
+  <script>
+    // Ensure navigator.modelContext exists (Polyfill / Native fallback for test environments)
+    if (!navigator.modelContext) {
+      const registeredTools = new Map();
+      navigator.modelContext = {
+        registerTool(tool) {
+          registeredTools.set(tool.name, tool);
+        },
+        unregisterTool(name) {
+          registeredTools.delete(name);
+        },
+        getRegisteredTools() {
+          return Array.from(registeredTools.values());
+        }
+      };
+    }
+
+    // 1. Tool: search_catalog
+    navigator.modelContext.registerTool({
+      name: 'search_catalog',
+      description: 'Search store catalog by keyword with optional category filtering and maximum result limits.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Keywords to search in product titles and descriptions'
+          },
+          category: {
+            type: 'string',
+            description: 'Optional category filter',
+            enum: ['electronics', 'apparel', 'home', 'books']
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum number of items to return (default: 10)'
+          }
+        },
+        required: ['query']
+      },
+      annotations: {
+        readOnlyHint: true
+      },
+      handler: async ({ query, category, limit = 10 }) => {
+        return {
+          results: [{ id: 'item_101', name: 'Acme Headphones', price: 99.99 }],
+          total: 1
+        };
+      }
+    });
+
+    // 2. Tool: add_to_cart
+    navigator.modelContext.registerTool({
+      name: 'add_to_cart',
+      description: 'Add a product to the user active shopping cart by ID and quantity.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          productId: {
+            type: 'string',
+            description: 'Unique identifier of the item to add'
+          },
+          quantity: {
+            type: 'integer',
+            description: 'Number of units to purchase (minimum 1)',
+            minimum: 1
+          }
+        },
+        required: ['productId', 'quantity']
+      },
+      annotations: {
+        readOnlyHint: false
+      },
+      handler: async ({ productId, quantity }) => {
+        return { success: true, cartCount: quantity };
+      }
+    });
+
+    // 3. Tool: checkout_order
+    navigator.modelContext.registerTool({
+      name: 'checkout_order',
+      description: 'Complete the purchase and place an order using the items in the cart and default shipping.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          shippingAddress: {
+            type: 'string',
+            description: 'Destination delivery address'
+          },
+          paymentMethodId: {
+            type: 'string',
+            description: 'Tokenized payment method ID'
+          }
+        },
+        required: ['shippingAddress', 'paymentMethodId']
+      },
+      annotations: {
+        destructiveHint: true,
+        confirmationHint: true,
+        title: 'Confirm Order Checkout'
+      },
+      handler: async ({ shippingAddress, paymentMethodId }) => {
+        return { orderId: 'ord_987654', status: 'confirmed' };
+      }
+    });
+  </script>
+</body>
+</html>
