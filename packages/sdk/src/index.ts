@@ -1,3 +1,4 @@
+import { scanUrl, ScanTargetOptions, WebMCPDetectionResult } from '@webmcp-validator/core';
 export * from '@webmcp-validator/core';
 
 /**
@@ -10,12 +11,20 @@ export class WebMCPValidator {
   static readonly version = '0.1.0';
 
   /**
+   * Scan a website URL using headless Chromium to discover WebMCP tools and APIs
+   */
+  static async scan(target: string | ScanTargetOptions): Promise<WebMCPDetectionResult> {
+    return scanUrl(target);
+  }
+
+  /**
    * Scan and audit a target URL for WebMCP readiness
    */
-  static async audit(url: string) {
-    // Implemented in Milestones 2 & 3
+  static async audit(target: string | ScanTargetOptions) {
+    const detection = await this.scan(target);
     return {
-      url,
+      url: typeof target === 'string' ? target : target.url,
+      detection,
       score: 0,
       timestamp: Date.now(),
     };
