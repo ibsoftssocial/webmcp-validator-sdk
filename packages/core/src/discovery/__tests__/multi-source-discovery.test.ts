@@ -45,6 +45,38 @@ describe('Multi-Source Discovery Engine (Day 4)', () => {
       expect(meta.originTrialTokens).toEqual(['test-token-123']);
     });
 
+    it('parses declarative HTML forms with toolname and data-tool-schema-ref', () => {
+      const formHtml = `
+        <!DOCTYPE html>
+        <html>
+        <body>
+          <form toolname="prepare_memorial_search" tooldescription="Prepare public directory search." data-tool-schema-ref="#search-schema" method="get">
+            <input name="search" type="search" placeholder="Search by name" required minlength="1" maxlength="120" />
+            <button type="submit">Search</button>
+          </form>
+          <script id="search-schema" type="application/schema+json">
+            {
+              "type": "object",
+              "required": ["search"],
+              "properties": {
+                "search": { "type": "string", "minLength": 1, "maxLength": 120 }
+              }
+            }
+          </script>
+        </body>
+        </html>
+      `;
+
+      const meta = parseDeclarativeHtml(formHtml, 'https://example.com');
+      expect(meta.declarativeTools).toBeDefined();
+      expect(meta.declarativeTools).toHaveLength(1);
+      expect(meta.declarativeTools![0].name).toBe('prepare_memorial_search');
+      expect(meta.declarativeTools![0].source).toBe('declarative');
+      expect(meta.declarativeTools![0].description).toBe('Prepare public directory search.');
+      expect(meta.declarativeTools![0].inputSchema.required).toContain('search');
+      expect(meta.declarativeTools![0].annotations?.readOnlyHint).toBe(true);
+    });
+
     it('returns empty lists for HTML without WebMCP markup', () => {
       const emptyHtml = `<html><head><title>No WebMCP</title></head><body></body></html>`;
       const meta = parseDeclarativeHtml(emptyHtml, 'https://example.com');
@@ -52,6 +84,7 @@ describe('Multi-Source Discovery Engine (Day 4)', () => {
       expect(meta.manifestLinks).toHaveLength(0);
       expect(meta.helpLinks).toHaveLength(0);
       expect(meta.originTrialTokens).toHaveLength(0);
+      expect(meta.declarativeTools).toHaveLength(0);
     });
   });
 

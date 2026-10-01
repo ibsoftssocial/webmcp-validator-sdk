@@ -50,6 +50,8 @@ export interface DeclarativeMetadata {
   helpLinks: string[];
   /** Origin trial tokens extracted from <meta http-equiv="origin-trial"> */
   originTrialTokens: string[];
+  /** Declarative tools declared via HTML markup (<form toolname="...">) */
+  declarativeTools?: DiscoveredTool[];
 }
 
 export interface ManifestDiscoveryResult {

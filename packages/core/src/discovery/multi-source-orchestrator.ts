@@ -105,11 +105,21 @@ export async function runMultiSourceDiscovery(
     errors.push(...directivesResult.errors);
   }
 
-  // 3. Deduplicate and merge discovered tools
+  // 3. Deduplicate and merge discovered tools across all sources
   // Imperative tools take priority for identical names, but all unique tools are preserved
   const mergedTools: DiscoveredTool[] = [...imperativeTools];
   const seenToolNames = new Set(imperativeTools.map((t) => t.name.toLowerCase()));
 
+  // Merge HTML declarative form tools
+  const htmlDeclarativeTools = declarativeMetadata.declarativeTools || [];
+  for (const decTool of htmlDeclarativeTools) {
+    if (!seenToolNames.has(decTool.name.toLowerCase())) {
+      mergedTools.push(decTool);
+      seenToolNames.add(decTool.name.toLowerCase());
+    }
+  }
+
+  // Merge manifest tools
   for (const manifestTool of manifestResult.tools) {
     if (!seenToolNames.has(manifestTool.name.toLowerCase())) {
       mergedTools.push(manifestTool);
@@ -121,7 +131,8 @@ export async function runMultiSourceDiscovery(
   const declarativeDetected =
     !!declarativeMetadata.webmcpVersion ||
     declarativeMetadata.manifestLinks.length > 0 ||
-    manifestResult.hasManifest;
+    manifestResult.hasManifest ||
+    htmlDeclarativeTools.length > 0;
 
   return {
     tools: mergedTools,

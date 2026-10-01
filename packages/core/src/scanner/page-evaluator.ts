@@ -10,6 +10,7 @@ export interface PageEvaluationData {
     manifestLinks: string[];
     helpLinks: string[];
     originTrialTokens: string[];
+    declarativeTools: any[];
   };
 }
 
@@ -82,6 +83,101 @@ export function evaluatePageWebMCP(): PageEvaluationData {
     }
   } catch {}
 
+  // Extract Declarative WebMCP Form Markup (e.g. <form toolname="..." ...>)
+  const declarativeTools: any[] = [];
+  try {
+    const formEls = doc ? doc.querySelectorAll('form[toolname], form[data-tool-name], [toolname], [data-tool-name]') : [];
+    for (const el of formEls) {
+      const name = el.getAttribute('toolname') || el.getAttribute('data-tool-name');
+      if (!name) continue;
+
+      let rawDesc = el.getAttribute('tooldescription') || el.getAttribute('data-tool-description') || el.getAttribute('aria-label') || '';
+      const description = rawDesc
+        .replace(/&#x27;/g, "'")
+        .replace(/&#39;/g, "'")
+        .replace(/&quot;/g, '"')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>');
+
+      let inputSchema: any = null;
+
+      // 1. Check data-tool-schema-ref or tool-schema-ref (e.g. "#prepare-memorial-search-schema")
+      const schemaRef = el.getAttribute('data-tool-schema-ref') || el.getAttribute('tool-schema-ref');
+      if (schemaRef && schemaRef.startsWith('#')) {
+        const scriptId = schemaRef.slice(1);
+        const scriptEl = doc.getElementById(scriptId);
+        if (scriptEl && scriptEl.textContent) {
+          try {
+            inputSchema = JSON.parse(scriptEl.textContent.trim());
+          } catch {}
+        }
+      }
+
+      // 2. If no script reference, infer schema from child form inputs
+      if (!inputSchema || typeof inputSchema !== 'object') {
+        const properties: Record<string, any> = {};
+        const required: string[] = [];
+        const inputs = el.querySelectorAll('input, select, textarea');
+
+        for (const input of inputs) {
+          const inputName = input.getAttribute('name');
+          if (!inputName || inputName === 'csrf' || inputName === '_csrf') continue;
+
+          const type = (input.getAttribute('type') || 'text').toLowerCase();
+          if (type === 'submit' || type === 'button' || type === 'reset' || type === 'image') continue;
+
+          const paramDesc = input.getAttribute('toolparamdescription') || input.getAttribute('data-tool-param-description') || input.getAttribute('placeholder') || '';
+          const prop: any = {
+            type: type === 'number' || type === 'range' ? 'number' : 'string',
+          };
+          if (paramDesc) prop.description = paramDesc;
+          if (input.hasAttribute('minlength')) {
+            const min = parseInt(input.getAttribute('minlength'), 10);
+            if (!isNaN(min)) prop.minLength = min;
+          }
+          if (input.hasAttribute('maxlength')) {
+            const max = parseInt(input.getAttribute('maxlength'), 10);
+            if (!isNaN(max)) prop.maxLength = max;
+          }
+          if (input.hasAttribute('pattern')) prop.pattern = input.getAttribute('pattern');
+
+          if (input.tagName && input.tagName.toLowerCase() === 'select') {
+            const options = Array.from(input.querySelectorAll('option')).map((o: any) => o.value || o.textContent).filter(Boolean);
+            if (options.length > 0) prop.enum = options;
+          }
+
+          properties[inputName] = prop;
+          if (input.hasAttribute('required')) {
+            required.push(inputName);
+          }
+        }
+
+        inputSchema = {
+          type: 'object',
+          properties,
+          ...(required.length > 0 ? { required } : {}),
+        };
+      }
+
+      const method = (el.getAttribute('method') || 'GET').toUpperCase();
+      const isReadOnly = method === 'GET' || el.getAttribute('role') === 'search';
+
+      declarativeTools.push({
+        name,
+        description,
+        inputSchema,
+        annotations: {
+          readOnlyHint: isReadOnly,
+          confirmationHint: !isReadOnly && method === 'POST',
+        },
+        source: 'declarative',
+        rawSourceUrl: baseUri,
+        discoveredAt: Date.now(),
+      });
+    }
+  } catch {}
+
   const toolsMap = new Map<string, any>();
 
   // Extract from navigator.modelContext
@@ -142,6 +238,7 @@ export function evaluatePageWebMCP(): PageEvaluationData {
       manifestLinks,
       helpLinks,
       originTrialTokens,
+      declarativeTools,
     },
   };
 }

@@ -63,7 +63,14 @@ program
         });
 
         for (const tool of result.tools) {
-          const sourceBadge = tool.source === 'manifest' ? chalk.magenta('manifest') : chalk.blue('imperative');
+          let sourceBadge = chalk.blue('imperative');
+          if (tool.source === 'declarative') {
+            sourceBadge = chalk.yellow('declarative');
+          } else if (tool.source === 'manifest') {
+            sourceBadge = chalk.magenta('manifest');
+          } else if (tool.source === 'llms-txt') {
+            sourceBadge = chalk.cyan('llms.txt');
+          }
           table.push([
             chalk.bold(tool.name),
             sourceBadge,
