@@ -37,6 +37,53 @@ export interface ScanTargetOptions {
   ignoreHTTPSErrors?: boolean;
   /** Extra wait time after page load for SPA hydration (in ms) */
   hydrationWaitMs?: number;
+  /** Whether to probe host-level well-known endpoints (/.well-known/mcp.json, /llms.txt) if not linked in HTML (default: true for root path, false for subpaths) */
+  probeWellKnown?: boolean;
+}
+
+export interface DeclarativeMetadata {
+  /** Value of <meta name="webmcp-version"> if present */
+  webmcpVersion?: string;
+  /** URLs extracted from <link rel="model-context"> tags */
+  manifestLinks: string[];
+  /** URLs extracted from <link rel="help"> or <link rel="llms-txt"> tags */
+  helpLinks: string[];
+  /** Origin trial tokens extracted from <meta http-equiv="origin-trial"> */
+  originTrialTokens: string[];
+}
+
+export interface ManifestDiscoveryResult {
+  /** Whether a valid MCP manifest JSON was discovered and parsed */
+  hasManifest: boolean;
+  /** URL where the manifest was successfully loaded from */
+  manifestUrl?: string;
+  /** Parsed manifest object */
+  manifestData?: any;
+  /** Tools extracted from the manifest */
+  tools: DiscoveredTool[];
+  /** Non-fatal errors encountered during manifest probing/parsing */
+  errors: string[];
+}
+
+export interface AgentDirectivesResult {
+  /** Whether /llms.txt was found and accessible */
+  hasLlmsTxt: boolean;
+  /** Resolved URL for llms.txt */
+  llmsTxtUrl?: string;
+  /** Text content of /llms.txt */
+  llmsTxtContent?: string;
+  /** Whether /llms-full.txt was found */
+  hasLlmsFullTxt: boolean;
+  /** Resolved URL for llms-full.txt */
+  llmsFullTxtUrl?: string;
+  /** Whether /robots.txt exists */
+  hasRobotsTxt: boolean;
+  /** Raw content of /robots.txt */
+  robotsTxtContent?: string;
+  /** Whether common AI crawler user-agents are permitted */
+  aiCrawlersAllowed?: boolean;
+  /** Non-fatal errors encountered during agent directives probing */
+  errors: string[];
 }
 
 export interface WebMCPDetectionResult {
@@ -56,8 +103,14 @@ export interface WebMCPDetectionResult {
   hasLlmsTxt: boolean;
   /** Content of llms.txt if found */
   llmsTxtContent?: string;
-  /** List of all tools discovered on the page */
+  /** List of all tools discovered on the page (imperative and manifest) */
   tools: DiscoveredTool[];
+  /** Declarative HTML discovery details (<meta>, <link>) */
+  declarativeMetadata?: DeclarativeMetadata;
+  /** Manifest discovery details (/.well-known/mcp.json, etc.) */
+  manifestDetails?: ManifestDiscoveryResult;
+  /** Agent directives details (llms.txt, robots.txt) */
+  agentDirectives?: AgentDirectivesResult;
   /** Errors encountered during scanning */
   scanErrors: string[];
 }

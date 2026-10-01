@@ -37,27 +37,36 @@ program
       }
 
       console.log('\n' + chalk.bold.underline('WebMCP Discovery Results:'));
-      console.log(`  ${chalk.bold('Target URL:')}               ${result.url}`);
-      console.log(`  ${chalk.bold('navigator.modelContext:')}   ${result.hasNavigatorModelContext ? chalk.green('✔ Found') : chalk.red('✖ Missing')}`);
-      console.log(`  ${chalk.bold('Imperative Tools:')}         ${result.imperativeDetected ? chalk.green('✔ Detected') : chalk.gray('None')}`);
-      console.log(`  ${chalk.bold('Total Tools Discovered:')}   ${chalk.bold(result.tools.length.toString())}`);
+      console.log(`  ${chalk.bold('Target URL:')}                 ${result.url}`);
+      console.log(`  ${chalk.bold('modelContext (Browser):')}      ${result.hasNavigatorModelContext ? chalk.green('✔ Found') : chalk.red('✖ Missing')}`);
+      console.log(`  ${chalk.bold('Imperative Tools:')}           ${result.imperativeDetected ? chalk.green('✔ Detected') : chalk.gray('None')}`);
+      console.log(`  ${chalk.bold('Declarative Markup:')}         ${result.declarativeDetected ? chalk.green('✔ Detected') : chalk.gray('None')}`);
+      console.log(`  ${chalk.bold('MCP Manifest:')}               ${result.manifestDetails?.hasManifest ? chalk.green('✔ Found') + chalk.gray(` (${result.manifestDetails.manifestUrl})`) : chalk.gray('None')}`);
+      console.log(`  ${chalk.bold('Agent Directives (llms.txt):')} ${result.hasLlmsTxt ? chalk.green('✔ Found') : chalk.gray('None')}`);
+      if (result.agentDirectives?.hasRobotsTxt) {
+        console.log(`  ${chalk.bold('AI Robots Crawler Policy:')}   ${result.agentDirectives.aiCrawlersAllowed ? chalk.green('✔ Permitted') : chalk.yellow('⚠ Blocked')}`);
+      }
+      console.log(`  ${chalk.bold('Total Tools Discovered:')}     ${chalk.bold(result.tools.length.toString())}`);
 
       if (result.tools.length > 0) {
         console.log('\n' + chalk.bold('Discovered Tools:'));
         const table = new Table({
           head: [
             chalk.cyan('Tool Name'),
+            chalk.cyan('Source'),
             chalk.cyan('Description'),
             chalk.cyan('Read Only'),
             chalk.cyan('Confirm Hint'),
           ],
-          colWidths: [24, 45, 12, 14],
+          colWidths: [22, 14, 40, 11, 14],
           wordWrap: true,
         });
 
         for (const tool of result.tools) {
+          const sourceBadge = tool.source === 'manifest' ? chalk.magenta('manifest') : chalk.blue('imperative');
           table.push([
             chalk.bold(tool.name),
+            sourceBadge,
             tool.description || chalk.gray('(No description)'),
             tool.annotations?.readOnlyHint ? chalk.green('Yes') : chalk.gray('No'),
             tool.annotations?.confirmationHint ? chalk.yellow('Yes') : chalk.gray('No'),

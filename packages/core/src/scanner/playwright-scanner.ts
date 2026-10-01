@@ -1,6 +1,7 @@
 import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import { ScanTargetOptions, WebMCPDetectionResult, DiscoveredTool } from '../types/index.js';
 import { evaluatePageWebMCP, normalizeDiscoveredTools } from './page-evaluator.js';
+import { runMultiSourceDiscovery } from '../discovery/index.js';
 
 export interface ScannerConfig {
   /** Default timeout in milliseconds for page navigation and evaluation (default: 15000) */
@@ -154,9 +155,51 @@ export class PlaywrightScanner {
       if (evalResult.rawTools.length > 0) {
         tools = normalizeDiscoveredTools(evalResult.rawTools, options.url);
       }
+
+      // Execute Multi-Source Discovery: Declarative tags, MCP Manifests, and Agent Directives
+      const multiSource = await runMultiSourceDiscovery({
+        pageUrl: options.url,
+        inPageDeclarative: evalResult?.declarative,
+        imperativeTools: tools,
+        probeWellKnown: options.probeWellKnown,
+        timeoutMs: Math.min(timeoutMs, 5000),
+      });
+
+      tools = multiSource.tools;
+      if (multiSource.errors.length > 0) {
+        scanErrors.push(...multiSource.errors);
+      }
+
+      return {
+        url: options.url,
+        scannedAt: startTime,
+        durationMs: Date.now() - startTime,
+        hasNavigatorModelContext,
+        imperativeDetected: multiSource.imperativeDetected,
+        declarativeDetected: multiSource.declarativeDetected,
+        hasLlmsTxt: multiSource.hasLlmsTxt,
+        llmsTxtContent: multiSource.llmsTxtContent,
+        tools: multiSource.tools,
+        declarativeMetadata: multiSource.declarativeMetadata,
+        manifestDetails: multiSource.manifestDetails,
+        agentDirectives: multiSource.agentDirectives,
+        scanErrors,
+      };
     } catch (err: any) {
       const errorMessage = err instanceof Error ? err.message : String(err);
       scanErrors.push(`Scanner error on ${options.url}: ${errorMessage}`);
+
+      return {
+        url: options.url,
+        scannedAt: startTime,
+        durationMs: Date.now() - startTime,
+        hasNavigatorModelContext: false,
+        imperativeDetected: false,
+        declarativeDetected: false,
+        hasLlmsTxt: false,
+        tools: [],
+        scanErrors,
+      };
     } finally {
       if (page) {
         await page.close().catch(() => {});
@@ -168,20 +211,6 @@ export class PlaywrightScanner {
         await this.close();
       }
     }
-
-    const durationMs = Date.now() - startTime;
-
-    return {
-      url: options.url,
-      scannedAt: startTime,
-      durationMs,
-      hasNavigatorModelContext,
-      imperativeDetected: tools.length > 0,
-      declarativeDetected: false, // Day 4 will implement declarative tag discovery
-      hasLlmsTxt: false,          // Day 4 will implement llms.txt discovery
-      tools,
-      scanErrors,
-    };
   }
 
   /**

@@ -151,6 +151,10 @@ export class MockServer {
           await this.serveFile(res, 'mcp-manifest.json', 'application/json; charset=utf-8');
           break;
 
+        case '/robots.txt':
+          await this.serveFile(res, 'robots.txt', 'text/plain; charset=utf-8');
+          break;
+
         default:
           res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
           res.end(`404 Not Found: ${pathname}`);

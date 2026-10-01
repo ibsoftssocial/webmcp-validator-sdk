@@ -5,22 +5,71 @@ export interface PageEvaluationData {
   hasDocumentModelContext: boolean;
   hasOriginTrial: boolean;
   rawTools: any[];
+  declarative: {
+    webmcpVersion?: string;
+    manifestLinks: string[];
+    helpLinks: string[];
+    originTrialTokens: string[];
+  };
 }
 
 /**
  * Script evaluated inside the browser page context to inspect modelContext
- * (supporting both navigator.modelContext and document.modelContext)
- * and extract all registered WebMCP tools safely.
+ * (supporting both navigator.modelContext and document.modelContext),
+ * extract all registered WebMCP tools, and parse declarative WebMCP tags safely.
  */
 export function evaluatePageWebMCP(): PageEvaluationData {
   const win = window as any;
   const nav = win.navigator;
   const doc = win.document;
+  const baseUri = doc?.baseURI || win?.location?.href || '';
 
   const hasNativeNav = typeof nav !== 'undefined' && 'modelContext' in nav && !!nav.modelContext;
   const hasNativeDoc = typeof doc !== 'undefined' && 'modelContext' in doc && !!doc.modelContext;
 
-  // Check for WebMCP origin trial meta tag
+  // Extract declarative WebMCP metadata (<meta name="webmcp-version">)
+  let webmcpVersion: string | undefined;
+  try {
+    const versionMeta = doc?.querySelector('meta[name="webmcp-version"]');
+    if (versionMeta) {
+      webmcpVersion = versionMeta.getAttribute('content') || undefined;
+    }
+  } catch {}
+
+  // Extract declarative manifest links (<link rel="model-context">)
+  const manifestLinks: string[] = [];
+  try {
+    const linkTags = doc ? doc.querySelectorAll('link[rel="model-context"]') : [];
+    for (const link of linkTags) {
+      const href = link.getAttribute('href');
+      if (href) {
+        try {
+          manifestLinks.push(new URL(href, baseUri).href);
+        } catch {
+          manifestLinks.push(href);
+        }
+      }
+    }
+  } catch {}
+
+  // Extract help & llms.txt links (<link rel="help">, <link rel="llms-txt">)
+  const helpLinks: string[] = [];
+  try {
+    const helpTags = doc ? doc.querySelectorAll('link[rel="help"], link[rel="llms-txt"]') : [];
+    for (const link of helpTags) {
+      const href = link.getAttribute('href');
+      if (href) {
+        try {
+          helpLinks.push(new URL(href, baseUri).href);
+        } catch {
+          helpLinks.push(href);
+        }
+      }
+    }
+  } catch {}
+
+  // Check for WebMCP origin trial meta tags
+  const originTrialTokens: string[] = [];
   let hasOriginTrial = false;
   try {
     const metaTags = doc ? doc.querySelectorAll('meta[http-equiv="origin-trial"]') : [];
@@ -28,7 +77,7 @@ export function evaluatePageWebMCP(): PageEvaluationData {
       const content = tag.getAttribute('content') || '';
       if (content.length > 0) {
         hasOriginTrial = true;
-        break;
+        originTrialTokens.push(content);
       }
     }
   } catch {}
@@ -81,13 +130,19 @@ export function evaluatePageWebMCP(): PageEvaluationData {
   const siteActivelyRegistered = !!win.__webmcp_site_invoked_registration || sanitizedTools.length > 0;
   const isBridgeInjected = !!win.__webmcp_bridge_injected;
   const siteProvidedNativeContext = (hasNativeNav || hasNativeDoc) && !isBridgeInjected;
-  const hasWebMCP = siteActivelyRegistered || siteProvidedNativeContext || hasOriginTrial;
+  const hasImperativeModelContext = siteActivelyRegistered || siteProvidedNativeContext || hasOriginTrial;
 
   return {
-    hasNavigatorModelContext: hasWebMCP,
+    hasNavigatorModelContext: hasImperativeModelContext,
     hasDocumentModelContext: hasNativeDoc,
     hasOriginTrial,
     rawTools: siteActivelyRegistered ? sanitizedTools : [],
+    declarative: {
+      webmcpVersion,
+      manifestLinks,
+      helpLinks,
+      originTrialTokens,
+    },
   };
 }
 

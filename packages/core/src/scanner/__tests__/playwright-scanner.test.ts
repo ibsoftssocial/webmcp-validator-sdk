@@ -22,7 +22,10 @@ describe('PlaywrightScanner (Day 3 Core Scanner Engine)', () => {
     expect(result.url).toBe(server.getUrl('/perfect'));
     expect(result.hasNavigatorModelContext).toBe(true);
     expect(result.imperativeDetected).toBe(true);
-    expect(result.tools).toHaveLength(3);
+    expect(result.declarativeDetected).toBe(true);
+    expect(result.hasLlmsTxt).toBe(true);
+    // 3 imperative tools + 1 additional manifest tool (get_store_hours)
+    expect(result.tools).toHaveLength(4);
     expect(result.scanErrors).toHaveLength(0);
     expect(result.durationMs).toBeGreaterThan(0);
 
@@ -30,6 +33,7 @@ describe('PlaywrightScanner (Day 3 Core Scanner Engine)', () => {
     expect(toolNames).toContain('search_catalog');
     expect(toolNames).toContain('add_to_cart');
     expect(toolNames).toContain('checkout_order');
+    expect(toolNames).toContain('get_store_hours');
 
     // Deep check tool details
     const searchTool = result.tools.find((t) => t.name === 'search_catalog')!;
