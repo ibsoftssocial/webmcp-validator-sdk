@@ -2,6 +2,13 @@ import { chromium, Browser, BrowserContext, Page } from 'playwright';
 import { ScanTargetOptions, WebMCPDetectionResult, DiscoveredTool } from '../types/index.js';
 import { evaluatePageWebMCP, normalizeDiscoveredTools } from './page-evaluator.js';
 import { runMultiSourceDiscovery } from '../discovery/index.js';
+import {
+  resolveDeviceConfig,
+  getStealthHeaders,
+  injectStealthScripts,
+  normalizeCookies,
+  setupResourceInterception,
+} from './hardening.js';
 
 export interface ScannerConfig {
   /** Default timeout in milliseconds for page navigation and evaluation (default: 15000) */
@@ -64,17 +71,51 @@ export class PlaywrightScanner {
     let tools: DiscoveredTool[] = [];
     let context: BrowserContext | null = null;
     let page: Page | null = null;
+    let httpStatus: number | undefined;
+    let finalUrl = options.url;
+    let redirectChain: string[] = [];
 
     try {
       const browser = await this.getBrowser();
 
-      // Configure context with custom headers, userAgent, SSL bypass
+      // Resolve device configuration (viewport, touch, scale factor, user agent)
+      const deviceConfig = resolveDeviceConfig({
+        isMobile: options.isMobile,
+        viewport: options.viewport,
+        userAgent: options.userAgent,
+      });
+
+      // Prepare anti-bot stealth client hints unless stealth is explicitly disabled
+      const stealthEnabled = options.stealth !== false;
+      const stealthHeaders = stealthEnabled ? getStealthHeaders(deviceConfig.isMobile) : {};
+      const extraHTTPHeaders = {
+        ...stealthHeaders,
+        ...(options.headers || {}),
+      };
+
+      // Configure context with custom headers, device emulation, SSL bypass
       context = await browser.newContext({
         ignoreHTTPSErrors: options.ignoreHTTPSErrors ?? true,
-        userAgent: options.userAgent,
-        extraHTTPHeaders: options.headers,
-        isMobile: options.isMobile ?? false,
+        userAgent: deviceConfig.userAgent,
+        viewport: deviceConfig.viewport,
+        deviceScaleFactor: deviceConfig.deviceScaleFactor,
+        hasTouch: deviceConfig.hasTouch,
+        isMobile: deviceConfig.isMobile,
+        extraHTTPHeaders,
       });
+
+      // Inject custom session cookies if provided
+      if (options.cookies) {
+        const normalized = normalizeCookies(options.cookies, options.url);
+        if (normalized.length > 0) {
+          await context.addCookies(normalized as any);
+        }
+      }
+
+      // Inject anti-bot stealth evasion before any page scripts execute
+      if (stealthEnabled) {
+        await context.addInitScript(injectStealthScripts);
+      }
 
       // Inject WebMCP Agent Bridge so sites checking document.modelContext or navigator.modelContext can register tools
       await context.addInitScript(() => {
@@ -125,11 +166,50 @@ export class PlaywrightScanner {
       page = await context.newPage();
       page.setDefaultTimeout(timeoutMs);
 
-      // Navigate to the target page
-      await page.goto(options.url, {
+      // Setup resource interception to abort heavy media / fonts if configured
+      if (options.blockMedia || (options.blockedResourceTypes && options.blockedResourceTypes.length > 0)) {
+        await setupResourceInterception(page, {
+          blockMedia: options.blockMedia,
+          blockedResourceTypes: options.blockedResourceTypes,
+        });
+      }
+
+      // Navigate to the target page and track HTTP response & redirects
+      const response = await page.goto(options.url, {
         waitUntil: 'domcontentloaded',
         timeout: timeoutMs,
       });
+
+      if (response) {
+        httpStatus = response.status();
+        finalUrl = page.url();
+
+        let req: any = response.request();
+        const chain: string[] = [];
+        while (req) {
+          const redirectedFrom = req.redirectedFrom();
+          if (redirectedFrom) {
+            chain.unshift(redirectedFrom.url());
+            req = redirectedFrom;
+          } else {
+            break;
+          }
+        }
+        redirectChain = chain;
+
+        if (httpStatus >= 400) {
+          scanErrors.push(`Received HTTP ${httpStatus} (${response.statusText() || 'Error'}) from ${options.url}`);
+        }
+      }
+
+      // Optional network idle wait
+      if (options.waitForNetworkIdle) {
+        try {
+          await page.waitForLoadState('networkidle', { timeout: Math.min(timeoutMs, 5000) });
+        } catch {
+          // Timeout waiting for network idle is non-fatal
+        }
+      }
 
       // Wait for SPA hydration: wait for registered tools in navigator or document modelContext
       try {
@@ -153,12 +233,12 @@ export class PlaywrightScanner {
 
       hasNavigatorModelContext = evalResult.hasNavigatorModelContext;
       if (evalResult.rawTools.length > 0) {
-        tools = normalizeDiscoveredTools(evalResult.rawTools, options.url);
+        tools = normalizeDiscoveredTools(evalResult.rawTools, finalUrl || options.url);
       }
 
       // Execute Multi-Source Discovery: Declarative tags, MCP Manifests, and Agent Directives
       const multiSource = await runMultiSourceDiscovery({
-        pageUrl: options.url,
+        pageUrl: finalUrl || options.url,
         inPageDeclarative: evalResult?.declarative,
         imperativeTools: tools,
         probeWellKnown: options.probeWellKnown,
@@ -183,6 +263,9 @@ export class PlaywrightScanner {
         declarativeMetadata: multiSource.declarativeMetadata,
         manifestDetails: multiSource.manifestDetails,
         agentDirectives: multiSource.agentDirectives,
+        httpStatus,
+        finalUrl,
+        redirectChain,
         scanErrors,
       };
     } catch (err: any) {
@@ -198,6 +281,9 @@ export class PlaywrightScanner {
         declarativeDetected: false,
         hasLlmsTxt: false,
         tools: [],
+        httpStatus,
+        finalUrl,
+        redirectChain,
         scanErrors,
       };
     } finally {

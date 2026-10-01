@@ -11,11 +11,27 @@ program
   .description('Audit, scan, and validate WebMCP tools on websites')
   .version('0.1.0');
 
+function collectHeaders(value: string, previous: Record<string, string> = {}): Record<string, string> {
+  const colonIdx = value.indexOf(':');
+  if (colonIdx !== -1) {
+    const key = value.slice(0, colonIdx).trim();
+    const val = value.slice(colonIdx + 1).trim();
+    return { ...previous, [key]: val };
+  }
+  return previous;
+}
+
 program
   .command('scan')
   .description('Scan a website for WebMCP tools and evaluate agent readiness')
   .argument('<url>', 'Target website URL to scan (e.g., https://example.com or http://localhost:3000)')
   .option('-t, --timeout <ms>', 'Timeout in milliseconds', '15000')
+  .option('-m, --mobile', 'Emulate mobile device viewport and user-agent')
+  .option('--block-media', 'Block images, media, and fonts to accelerate scan')
+  .option('-c, --cookie <string>', 'Custom session cookie string (e.g. "auth_token=xyz; session=123")')
+  .option('-H, --header <string>', 'Custom HTTP header (Key: Value)', collectHeaders, {})
+  .option('--no-stealth', 'Disable anti-bot stealth emulation')
+  .option('--wait-network-idle', 'Wait for network idle before evaluating tools')
   .option('-o, --output <file>', 'Save output report to file (json, md, or html)')
   .option('--format <type>', 'Output format: pretty, json, markdown, html', 'pretty')
   .option('--fail-under <score>', 'Exit with code 1 if score is below this threshold', '80')
@@ -27,6 +43,12 @@ program
       const result = await scanUrl({
         url,
         timeoutMs,
+        isMobile: !!options.mobile,
+        blockMedia: !!options.blockMedia,
+        cookies: options.cookie,
+        headers: options.header,
+        stealth: options.stealth,
+        waitForNetworkIdle: !!options.waitNetworkIdle,
       });
 
       spinner.succeed(`Scan completed in ${chalk.yellow(result.durationMs + 'ms')}`);
@@ -38,6 +60,23 @@ program
 
       console.log('\n' + chalk.bold.underline('WebMCP Discovery Results:'));
       console.log(`  ${chalk.bold('Target URL:')}                 ${result.url}`);
+      if (result.httpStatus) {
+        const statusBadge =
+          result.httpStatus === 200
+            ? chalk.green(`✔ ${result.httpStatus} OK`)
+            : result.httpStatus >= 400
+            ? chalk.red(`✖ ${result.httpStatus}`)
+            : chalk.yellow(`⚠ ${result.httpStatus}`);
+        console.log(`  ${chalk.bold('HTTP Status:')}                 ${statusBadge}`);
+      }
+      if (result.redirectChain && result.redirectChain.length > 0) {
+        console.log(`  ${chalk.bold('Redirect Chain:')}           ${chalk.gray(result.redirectChain.join(' ➔ ') + ' ➔ ') + chalk.cyan(result.finalUrl)}`);
+      } else if (result.finalUrl && result.finalUrl !== result.url) {
+        console.log(`  ${chalk.bold('Final URL:')}                  ${result.finalUrl}`);
+      }
+      if (options.mobile) {
+        console.log(`  ${chalk.bold('Device Emulation:')}          ${chalk.cyan('📱 Mobile (390x844, Touch)')}`);
+      }
       console.log(`  ${chalk.bold('modelContext (Browser):')}      ${result.hasNavigatorModelContext ? chalk.green('✔ Found') : chalk.red('✖ Missing')}`);
       console.log(`  ${chalk.bold('Imperative Tools:')}           ${result.imperativeDetected ? chalk.green('✔ Detected') : chalk.gray('None')}`);
       console.log(`  ${chalk.bold('Declarative Markup:')}         ${result.declarativeDetected ? chalk.green('✔ Detected') : chalk.gray('None')}`);

@@ -18,6 +18,22 @@ export const DiscoveredToolSchema = ToolDefinitionSchema.extend({
 
 export type DiscoveredTool = z.infer<typeof DiscoveredToolSchema>;
 
+export interface CookieOption {
+  name: string;
+  value: string;
+  url?: string;
+  domain?: string;
+  path?: string;
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: 'Strict' | 'Lax' | 'None';
+}
+
+export interface ViewportOption {
+  width: number;
+  height: number;
+}
+
 export interface ScanTargetOptions {
   /** Target URL to scan (e.g. https://example.com or http://localhost:3000) */
   url: string;
@@ -27,8 +43,20 @@ export interface ScanTargetOptions {
   headers?: Record<string, string>;
   /** Custom user agent string */
   userAgent?: string;
-  /** Emulate mobile device */
+  /** Emulate mobile device viewport and user-agent */
   isMobile?: boolean;
+  /** Custom viewport dimensions (default: 1920x1080 for desktop, 390x844 for mobile) */
+  viewport?: ViewportOption;
+  /** Custom session cookies to inject */
+  cookies?: CookieOption[] | string;
+  /** Whether to enable anti-bot stealth emulation (default: true) */
+  stealth?: boolean;
+  /** Whether to abort heavy media (images, videos, fonts) to accelerate scans (default: false) */
+  blockMedia?: boolean;
+  /** Specific resource types to abort (e.g. ['image', 'media', 'font', 'stylesheet']) */
+  blockedResourceTypes?: ('image' | 'media' | 'font' | 'stylesheet' | 'other')[];
+  /** Wait for network to be idle before completing evaluation */
+  waitForNetworkIdle?: boolean;
   /** Custom path to system Chrome executable */
   executablePath?: string;
   /** Run headless or headed browser */
@@ -113,6 +141,12 @@ export interface WebMCPDetectionResult {
   manifestDetails?: ManifestDiscoveryResult;
   /** Agent directives details (llms.txt, robots.txt) */
   agentDirectives?: AgentDirectivesResult;
+  /** HTTP response status code (e.g. 200, 301, 401, 403, 404) */
+  httpStatus?: number;
+  /** Final URL after all browser redirects */
+  finalUrl?: string;
+  /** Redirect URLs traversed during navigation */
+  redirectChain?: string[];
   /** Errors encountered during scanning */
   scanErrors: string[];
 }

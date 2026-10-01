@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:server": "tsx packages/core/src/testing/run-server.ts",
-    "typecheck": "tsc -b",
+    "typecheck": "npm run --workspaces --if-present typecheck",
     "clean": "rm -rf packages/*/dist node_modules packages/*/node_modules"
   },
   "devDependencies": {

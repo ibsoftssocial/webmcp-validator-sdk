@@ -2,7 +2,6 @@ import { describe, it, expect } from 'vitest';
 import {
   ToolDefinitionSchema,
   ToolAnnotationsSchema,
-  FindingCategorySchema,
   WebMCPReadinessReportSchema,
   CATEGORY_WEIGHTS,
   TOOL_NAME_REGEX,

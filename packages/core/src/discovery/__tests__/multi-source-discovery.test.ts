@@ -6,7 +6,6 @@ import {
   discoverManifest,
   discoverAgentDirectives,
   analyzeRobotsTxt,
-  runMultiSourceDiscovery,
 } from '../index.js';
 
 describe('Multi-Source Discovery Engine (Day 4)', () => {
@@ -70,11 +69,12 @@ describe('Multi-Source Discovery Engine (Day 4)', () => {
       const meta = parseDeclarativeHtml(formHtml, 'https://example.com');
       expect(meta.declarativeTools).toBeDefined();
       expect(meta.declarativeTools).toHaveLength(1);
-      expect(meta.declarativeTools![0].name).toBe('prepare_memorial_search');
-      expect(meta.declarativeTools![0].source).toBe('declarative');
-      expect(meta.declarativeTools![0].description).toBe('Prepare public directory search.');
-      expect(meta.declarativeTools![0].inputSchema.required).toContain('search');
-      expect(meta.declarativeTools![0].annotations?.readOnlyHint).toBe(true);
+      const tool0 = meta.declarativeTools![0]!;
+      expect(tool0.name).toBe('prepare_memorial_search');
+      expect(tool0.source).toBe('declarative');
+      expect(tool0.description).toBe('Prepare public directory search.');
+      expect(tool0.inputSchema.required).toContain('search');
+      expect(tool0.annotations?.readOnlyHint).toBe(true);
     });
 
     it('returns empty lists for HTML without WebMCP markup', () => {
@@ -186,8 +186,8 @@ describe('Multi-Source Discovery Engine (Day 4)', () => {
 
       // 2 declarative tools from /mcp/manifest.json
       expect(result.tools).toHaveLength(2);
-      expect(result.tools[0].source).toBe('manifest');
-      expect(result.tools[1].source).toBe('manifest');
+      expect(result.tools[0]!.source).toBe('manifest');
+      expect(result.tools[1]!.source).toBe('manifest');
 
       expect(result.declarativeMetadata?.webmcpVersion).toBe('1.0');
       expect(result.manifestDetails?.hasManifest).toBe(true);

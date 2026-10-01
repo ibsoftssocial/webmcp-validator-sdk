@@ -1,11 +1,28 @@
 import http, { IncomingMessage, ServerResponse } from 'node:http';
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const FIXTURES_DIR = path.join(__dirname, 'fixtures');
+
+function resolveDefaultFixturesDir(): string {
+  const candidates = [
+    path.join(__dirname, 'fixtures'),
+    path.resolve(__dirname, '../src/testing/fixtures'),
+    path.resolve(__dirname, '../../core/src/testing/fixtures'),
+    path.resolve(__dirname, '../../../packages/core/src/testing/fixtures'),
+  ];
+  for (const candidate of candidates) {
+    if (fsSync.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+  return path.join(__dirname, 'fixtures');
+}
+
+const FIXTURES_DIR = resolveDefaultFixturesDir();
 
 export interface MockServerOptions {
   /** Port to listen on (default: 0 for dynamic random OS port) */
@@ -28,11 +45,19 @@ export class MockServer {
   private host: string = '127.0.0.1';
   private fixturesDir: string;
   private _isRunning: boolean = false;
+  public mediaRequestsCount: number = 0;
 
   constructor(options: MockServerOptions = {}) {
     this.port = options.port ?? 0;
     this.host = options.host ?? '127.0.0.1';
     this.fixturesDir = options.fixturesDir ?? FIXTURES_DIR;
+  }
+
+  /**
+   * Reset tracking counters
+   */
+  resetCounters(): void {
+    this.mediaRequestsCount = 0;
   }
 
   /**
@@ -154,6 +179,131 @@ export class MockServer {
         case '/robots.txt':
           await this.serveFile(res, 'robots.txt', 'text/plain; charset=utf-8');
           break;
+
+        case '/protected': {
+          const cookieHeader = req.headers.cookie || '';
+          const authHeader = req.headers.authorization || '';
+          const isAuthorized =
+            cookieHeader.includes('auth_token=secret_pass') ||
+            authHeader.includes('Bearer secret_pass');
+
+          if (isAuthorized) {
+            res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+            res.end(`<!DOCTYPE html>
+<html>
+<head><title>Protected Admin Portal</title></head>
+<body>
+  <h1>Protected Area</h1>
+  <script>
+    if (navigator.modelContext) {
+      navigator.modelContext.registerTool({
+        name: 'protected_admin_tool',
+        description: 'Authorized administrative operation',
+        inputSchema: { type: 'object', properties: { action: { type: 'string' } } }
+      });
+    }
+  </script>
+</body>
+</html>`);
+          } else {
+            res.writeHead(401, { 'Content-Type': 'text/plain; charset=utf-8' });
+            res.end('401 Unauthorized: Authentication required');
+          }
+          break;
+        }
+
+        case '/responsive': {
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<!DOCTYPE html>
+<html>
+<head><title>Responsive Portal</title></head>
+<body>
+  <h1>Responsive Device</h1>
+  <script>
+    const isMobile = window.innerWidth <= 500 || navigator.userAgent.includes('Mobile') || navigator.userAgent.includes('iPhone');
+    if (navigator.modelContext) {
+      if (isMobile) {
+        navigator.modelContext.registerTool({
+          name: 'mobile_quick_tool',
+          description: 'Mobile optimized tool registration',
+          inputSchema: { type: 'object' }
+        });
+      } else {
+        navigator.modelContext.registerTool({
+          name: 'desktop_full_tool',
+          description: 'Desktop full tool registration',
+          inputSchema: { type: 'object' }
+        });
+      }
+    }
+  </script>
+</body>
+</html>`);
+          break;
+        }
+
+        case '/redirect': {
+          res.writeHead(302, { Location: '/perfect' });
+          res.end();
+          break;
+        }
+
+        case '/stealth-check': {
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<!DOCTYPE html>
+<html>
+<head><title>Stealth Inspection</title></head>
+<body>
+  <h1>Stealth Status</h1>
+  <script>
+    const isWebdriverUndefined = navigator.webdriver === undefined;
+    const hasChrome = typeof window.chrome === 'object' && !!window.chrome.runtime;
+    if (navigator.modelContext && isWebdriverUndefined && hasChrome) {
+      navigator.modelContext.registerTool({
+        name: 'stealth_verified_tool',
+        description: 'Anti-bot stealth emulation verified',
+        inputSchema: { type: 'object' }
+      });
+    }
+  </script>
+</body>
+</html>`);
+          break;
+        }
+
+        case '/media-page': {
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          res.end(`<!DOCTYPE html>
+<html>
+<head><title>Media Page</title></head>
+<body>
+  <h1>Media Page</h1>
+  <img src="/dummy-image.jpg" alt="Dummy" />
+  <script>
+    if (navigator.modelContext) {
+      navigator.modelContext.registerTool({
+        name: 'media_test_tool',
+        description: 'Tool registered on media page',
+        inputSchema: { type: 'object' }
+      });
+    }
+  </script>
+</body>
+</html>`);
+          break;
+        }
+
+        case '/dummy-image.jpg': {
+          this.mediaRequestsCount++;
+          // Minimal 1x1 transparent GIF
+          const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+          res.writeHead(200, {
+            'Content-Type': 'image/gif',
+            'Content-Length': pixel.length,
+          });
+          res.end(pixel);
+          break;
+        }
 
         default:
           res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
