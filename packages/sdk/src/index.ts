@@ -1,4 +1,11 @@
-import { scanUrl, ScanTargetOptions, WebMCPDetectionResult } from '@webmcp-validator/core';
+import {
+  scanUrl,
+  ScanTargetOptions,
+  WebMCPDetectionResult,
+  lintWebMCP,
+  LinterOptions,
+  LintResult,
+} from '@webmcp-validator/core';
 export * from '@webmcp-validator/core';
 
 /**
@@ -15,6 +22,13 @@ export class WebMCPValidator {
    */
   static async scan(target: string | ScanTargetOptions): Promise<WebMCPDetectionResult> {
     return scanUrl(target);
+  }
+
+  /**
+   * Lint a WebMCP detection result to identify schema errors, security risks, and best practice violations
+   */
+  static async lint(detection: WebMCPDetectionResult, options?: LinterOptions): Promise<LintResult> {
+    return lintWebMCP(detection, options);
   }
 
   /**

@@ -95,5 +95,28 @@ describe('CLI Integration Tests (Day 5 Flags & Diagnostics)', () => {
     expect(stdout).toContain('HTTP Status:');
     expect(stdout).toContain('Redirect Chain:');
     expect(stdout).toContain('Discovered Tools:');
+    expect(stdout).toContain('Linter Audit Findings:');
+  });
+
+  it('attaches lint results to JSON output and respects --no-lint flag', async () => {
+    const url = server.getUrl('/perfect');
+
+    // Default: includes lint
+    const { stdout: withLint } = await execFileAsync('node', [CLI_PATH, 'scan', url, '--format', 'json']);
+    const resWithLint = JSON.parse(withLint);
+    expect(resWithLint.lint).toBeDefined();
+    expect(resWithLint.lint.rulesExecuted).toBeGreaterThan(0);
+
+    // --no-lint: omits lint
+    const { stdout: withoutLint } = await execFileAsync('node', [
+      CLI_PATH,
+      'scan',
+      url,
+      '--no-lint',
+      '--format',
+      'json',
+    ]);
+    const resWithoutLint = JSON.parse(withoutLint);
+    expect(resWithoutLint.lint).toBeUndefined();
   });
 });

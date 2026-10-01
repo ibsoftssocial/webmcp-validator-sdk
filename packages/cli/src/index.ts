@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
-import { scanUrl } from 'webmcp-validator-sdk';
+import { scanUrl, lintWebMCP } from 'webmcp-validator-sdk';
 
 const program = new Command();
 
@@ -32,6 +32,11 @@ program
   .option('-H, --header <string>', 'Custom HTTP header (Key: Value)', collectHeaders, {})
   .option('--no-stealth', 'Disable anti-bot stealth emulation')
   .option('--wait-network-idle', 'Wait for network idle before evaluating tools')
+  .option('--no-lint', 'Do not run linter rules on discovered tools')
+  .option('--min-severity <level>', 'Minimum finding severity: error, warning, info')
+  .option('--category <category>', 'Filter lint findings by category')
+  .option('--rules <ids>', 'Comma-separated list of rule IDs to evaluate')
+  .option('--skip-rules <ids>', 'Comma-separated list of rule IDs to skip')
   .option('-o, --output <file>', 'Save output report to file (json, md, or html)')
   .option('--format <type>', 'Output format: pretty, json, markdown, html', 'pretty')
   .option('--fail-under <score>', 'Exit with code 1 if score is below this threshold', '80')
@@ -53,8 +58,19 @@ program
 
       spinner.succeed(`Scan completed in ${chalk.yellow(result.durationMs + 'ms')}`);
 
+      let lintResult: any = null;
+      if (options.lint !== false) {
+        lintResult = await lintWebMCP(result, {
+          minSeverity: options.minSeverity,
+          categories: options.category ? [options.category] : undefined,
+          includeRules: options.rules ? options.rules.split(',').map((s: string) => s.trim()) : undefined,
+          excludeRules: options.skipRules ? options.skipRules.split(',').map((s: string) => s.trim()) : undefined,
+        });
+      }
+
       if (options.format === 'json') {
-        console.log(JSON.stringify(result, null, 2));
+        const jsonOutput = lintResult ? { ...result, lint: lintResult } : result;
+        console.log(JSON.stringify(jsonOutput, null, 2));
         return;
       }
 
@@ -122,6 +138,49 @@ program
         console.log(table.toString());
       } else {
         console.log(chalk.yellow('\nℹ No WebMCP tools were discovered on this page.'));
+      }
+
+      if (lintResult) {
+        console.log('\n' + chalk.bold.underline('Linter Audit Findings:'));
+        console.log(`  ${chalk.bold('Rules Evaluated:')}           ${lintResult.rulesExecuted}`);
+        console.log(
+          `  ${chalk.bold('Findings Summary:')}          ${chalk.red(
+            `${lintResult.errorCount} Errors`
+          )}, ${chalk.yellow(`${lintResult.warningCount} Warnings`)}, ${chalk.cyan(
+            `${lintResult.infoCount} Info`
+          )}`
+        );
+
+        if (lintResult.findings.length > 0) {
+          const findingsTable = new Table({
+            head: [
+              chalk.cyan('Severity'),
+              chalk.cyan('Rule'),
+              chalk.cyan('Target'),
+              chalk.cyan('Finding & Remediation'),
+            ],
+            colWidths: [12, 12, 24, 52],
+            wordWrap: true,
+          });
+
+          for (const f of lintResult.findings) {
+            const sevBadge =
+              f.severity === 'error'
+                ? chalk.red.bold('ERROR')
+                : f.severity === 'warning'
+                ? chalk.yellow.bold('WARN')
+                : chalk.cyan('INFO');
+            const target = f.toolName ? chalk.bold(f.toolName) : chalk.gray('(page)');
+            const messageText = `${f.message}${
+              f.suggestion ? '\n' + chalk.gray('↳ ' + f.suggestion) : ''
+            }`;
+            findingsTable.push([sevBadge, chalk.bold(f.ruleId), target, messageText]);
+          }
+
+          console.log(findingsTable.toString());
+        } else {
+          console.log(chalk.green('\n✔ No lint findings or rule violations detected!'));
+        }
       }
 
       if (result.scanErrors.length > 0) {
