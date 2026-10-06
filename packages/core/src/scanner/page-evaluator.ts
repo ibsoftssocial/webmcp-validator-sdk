@@ -206,6 +206,30 @@ export function evaluatePageWebMCP(): PageEvaluationData {
     }
   } catch {}
 
+  // Extract from known WebMCP client bridges and fallbacks (e.g. window.webmcpfyGravityFormsTools, window.webmcpTools, window.__webmcpTools)
+  try {
+    const fallbackBridges = [
+      win.webmcpfyGravityFormsTools?.tools,
+      win.webmcpTools,
+      win.__webmcpTools,
+    ];
+    for (const b of fallbackBridges) {
+      if (b && typeof b === 'object') {
+        const entries = Array.isArray(b) ? b.map((t: any) => [t?.name, t]) : Object.entries(b);
+        for (const [name, toolObj] of entries as [string, any][]) {
+          if (name && !toolsMap.has(name) && toolObj) {
+            toolsMap.set(name, {
+              name,
+              description: toolObj.description || '',
+              inputSchema: toolObj.inputSchema && typeof toolObj.inputSchema === 'object' ? toolObj.inputSchema : { type: 'object' },
+              annotations: toolObj.annotations,
+            });
+          }
+        }
+      }
+    }
+  } catch {}
+
   const rawToolsList = Array.from(toolsMap.values());
 
   // Safely serialize tool objects to avoid non-serializable properties (e.g. functions, circular DOM nodes)

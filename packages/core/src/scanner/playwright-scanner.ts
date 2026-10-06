@@ -33,7 +33,7 @@ export class PlaywrightScanner {
       headless: config.headless ?? true,
       executablePath: config.executablePath ?? '',
       persistentBrowser: config.persistentBrowser ?? true,
-      defaultHydrationWaitMs: config.defaultHydrationWaitMs ?? 1000,
+      defaultHydrationWaitMs: config.defaultHydrationWaitMs ?? 3000,
     };
   }
 
@@ -202,6 +202,13 @@ export class PlaywrightScanner {
         }
       }
 
+      // Wait for page load state (deferred scripts & stylesheets downloaded)
+      try {
+        await page.waitForLoadState('load', { timeout: Math.min(timeoutMs, 6000) });
+      } catch {
+        // Load timeout is non-fatal
+      }
+
       // Optional network idle wait
       if (options.waitForNetworkIdle) {
         try {
@@ -211,7 +218,7 @@ export class PlaywrightScanner {
         }
       }
 
-      // Wait for SPA hydration: wait for registered tools in navigator or document modelContext
+      // Wait for SPA hydration: wait for registered tools in navigator or document modelContext, or known WebMCP bridges
       try {
         await page.waitForFunction(
           () => {
@@ -219,7 +226,10 @@ export class PlaywrightScanner {
             const navTools = win.navigator?.modelContext?.getRegisteredTools?.();
             const docTools = win.document?.modelContext?.getRegisteredTools?.();
             const total = (Array.isArray(navTools) ? navTools.length : 0) + (Array.isArray(docTools) ? docTools.length : 0);
-            return total > 0;
+            if (total > 0) return true;
+            if (win.webmcpfyGravityFormsTools?.tools && Object.keys(win.webmcpfyGravityFormsTools.tools).length > 0) return true;
+            if (win.webmcpTools && (Array.isArray(win.webmcpTools) ? win.webmcpTools.length > 0 : Object.keys(win.webmcpTools).length > 0)) return true;
+            return false;
           },
           undefined,
           { timeout: hydrationWaitMs }
