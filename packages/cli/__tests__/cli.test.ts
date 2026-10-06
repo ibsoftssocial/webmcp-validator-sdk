@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import fs from 'node:fs/promises';
+import os from 'node:os';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
@@ -177,6 +179,106 @@ describe('CLI Integration Tests (Day 5 Flags & Diagnostics)', () => {
       expect(err.code).toBe(1);
     }
     expect(failed).toBe(true);
+  });
+
+  describe('Day 8 Multi-Format Reporter & File Export (-o, --format)', () => {
+    let tempDir: string;
+
+    beforeAll(async () => {
+      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'webmcp-cli-report-test-'));
+    });
+
+    afterAll(async () => {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    });
+
+    it('outputs valid Markdown report with --format markdown', async () => {
+      const url = server.getUrl('/perfect');
+      const { stdout } = await execFileAsync('node', [
+        CLI_PATH,
+        'scan',
+        url,
+        '--format',
+        'markdown',
+      ]);
+
+      expect(stdout).toContain('# WebMCP AI Readiness Audit Report');
+      expect(stdout).toContain('## Executive Summary');
+      expect(stdout).toContain('## Category Breakdown');
+      expect(stdout).toContain('## Discovered Tools');
+      expect(stdout).toContain('### Tool Schemas');
+    });
+
+    it('outputs valid self-contained HTML report with --format html', async () => {
+      const url = server.getUrl('/perfect');
+      const { stdout } = await execFileAsync('node', [
+        CLI_PATH,
+        'scan',
+        url,
+        '--format',
+        'html',
+      ]);
+
+      expect(stdout).toContain('<!DOCTYPE html>');
+      expect(stdout).toContain('<html lang="en">');
+      expect(stdout).toContain('<style>');
+      expect(stdout).toContain('<svg class="gauge-svg"');
+      expect(stdout).toContain('Discovered Tools');
+      expect(stdout).toContain('</html>');
+    });
+
+    it('saves HTML report to disk with -o flag and logs confirmation message in terminal', async () => {
+      const url = server.getUrl('/perfect');
+      const outPath = path.join(tempDir, 'audit-report.html');
+
+      const { stdout } = await execFileAsync('node', [
+        CLI_PATH,
+        'scan',
+        url,
+        '-o',
+        outPath,
+      ]);
+
+      expect(stdout).toContain('WebMCP AI Readiness Score:');
+      expect(stdout).toContain('✔ Audit report saved to');
+      expect(stdout).toContain(outPath);
+
+      const exists = await fs.stat(outPath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      const htmlContent = await fs.readFile(outPath, 'utf8');
+      expect(htmlContent).toContain('<!DOCTYPE html>');
+      expect(htmlContent).toContain('Discovered Tools');
+    });
+
+    it('saves Markdown report to disk when -o file has .md extension', async () => {
+      const url = server.getUrl('/perfect');
+      const outPath = path.join(tempDir, 'reports', 'audit.md');
+
+      await execFileAsync('node', [CLI_PATH, 'scan', url, '-o', outPath]);
+
+      const exists = await fs.stat(outPath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      const mdContent = await fs.readFile(outPath, 'utf8');
+      expect(mdContent).toContain('# WebMCP AI Readiness Audit Report');
+      expect(mdContent).toContain('## Category Breakdown');
+    });
+
+    it('saves JSON report to disk when -o file has .json extension', async () => {
+      const url = server.getUrl('/perfect');
+      const outPath = path.join(tempDir, 'audit.json');
+
+      await execFileAsync('node', [CLI_PATH, 'scan', url, '-o', outPath]);
+
+      const exists = await fs.stat(outPath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      const jsonContent = await fs.readFile(outPath, 'utf8');
+      const parsed = JSON.parse(jsonContent);
+      expect(parsed.overallScore).toBeGreaterThanOrEqual(90);
+      expect(parsed.grade).toBe('A');
+    });
   });
 });
 

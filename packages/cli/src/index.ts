@@ -1,8 +1,19 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
-import { scanUrl, lintWebMCP, calculateReadinessScore, GradeRating } from 'webmcp-validator-sdk';
+import {
+  scanUrl,
+  lintWebMCP,
+  calculateReadinessScore,
+  GradeRating,
+  generateReport,
+  saveReportToFile,
+  inferReportFormat,
+  ReportFormat,
+} from 'webmcp-validator-sdk';
 
 const program = new Command();
 
@@ -90,11 +101,54 @@ program
         });
       }
 
+      // Save report to file if -o / --output specified
+      if (options.output) {
+        if (readinessReport) {
+          const outFormat: ReportFormat =
+            options.format && options.format !== 'pretty'
+              ? (options.format as ReportFormat)
+              : inferReportFormat(options.output);
+          await saveReportToFile(readinessReport, options.output, { format: outFormat });
+        } else {
+          const resolvedPath = path.resolve(options.output);
+          await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
+          await fs.writeFile(resolvedPath, JSON.stringify(result, null, 2), 'utf8');
+        }
+      }
+
       if (options.format === 'json') {
         const jsonOutput = lintResult
           ? { ...result, lint: lintResult, readiness: readinessReport }
           : result;
         console.log(JSON.stringify(jsonOutput, null, 2));
+        if (
+          failUnderThreshold !== undefined &&
+          readinessReport &&
+          readinessReport.overallScore < failUnderThreshold
+        ) {
+          process.exit(1);
+        }
+        return;
+      }
+
+      if (options.format === 'markdown' || options.format === 'md') {
+        if (readinessReport) {
+          console.log(generateReport(readinessReport, 'markdown'));
+        }
+        if (
+          failUnderThreshold !== undefined &&
+          readinessReport &&
+          readinessReport.overallScore < failUnderThreshold
+        ) {
+          process.exit(1);
+        }
+        return;
+      }
+
+      if (options.format === 'html') {
+        if (readinessReport) {
+          console.log(generateReport(readinessReport, 'html'));
+        }
         if (
           failUnderThreshold !== undefined &&
           readinessReport &&
@@ -259,6 +313,10 @@ program
         }
 
         console.log(scoreTable.toString());
+      }
+
+      if (options.output) {
+        console.log(chalk.green(`\n✔ Audit report saved to ${chalk.bold(options.output)}`));
       }
 
       if (result.scanErrors.length > 0) {

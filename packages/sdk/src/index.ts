@@ -8,6 +8,10 @@ import {
   calculateReadinessScore,
   ScorerOptions,
   WebMCPReadinessReport,
+  generateReport,
+  saveReportToFile,
+  ReportFormat,
+  ReporterOptions,
 } from '@webmcp-validator/core';
 export * from '@webmcp-validator/core';
 
@@ -62,6 +66,28 @@ export class WebMCPValidator {
     const detection = await this.scan(target);
     const lintResult = await this.lint(detection, options?.linter);
     return this.score(detection, lintResult, options?.scorer);
+  }
+
+  /**
+   * Format a readiness report into string (json, markdown, html, pretty)
+   */
+  static generateReport(
+    report: WebMCPReadinessReport,
+    format: ReportFormat = 'json',
+    options?: ReporterOptions
+  ): string {
+    return generateReport(report, format, options);
+  }
+
+  /**
+   * Save a formatted report to a local file (.html, .md, .json)
+   */
+  static async saveReport(
+    report: WebMCPReadinessReport,
+    filePath: string,
+    options?: ReporterOptions & { format?: ReportFormat }
+  ): Promise<void> {
+    return saveReportToFile(report, filePath, options);
   }
 }
 

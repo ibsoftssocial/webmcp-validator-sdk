@@ -5,3 +5,4 @@ export * from './discovery/index.js';
 export * from './testing/index.js';
 export * from './linter/index.js';
 export * from './scorer/index.js';
+export * from './reporter/index.js';
