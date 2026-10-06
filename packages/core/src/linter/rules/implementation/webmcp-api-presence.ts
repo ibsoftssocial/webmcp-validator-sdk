@@ -6,7 +6,7 @@ export const webmcpApiPresenceRule: LintRule = {
   description: 'Validates that the target site provides a detectable WebMCP implementation (navigator.modelContext, declarative markup, or manifest).',
   category: 'implementation',
   defaultSeverity: 'error',
-  penaltyPoints: 25,
+  penaltyPoints: 100,
   scope: 'page',
   docsUrl: 'https://github.com/webmachinelearning/webmcp/blob/main/spec/overview.md',
 

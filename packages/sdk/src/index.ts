@@ -5,8 +5,18 @@ import {
   lintWebMCP,
   LinterOptions,
   LintResult,
+  calculateReadinessScore,
+  ScorerOptions,
+  WebMCPReadinessReport,
 } from '@webmcp-validator/core';
 export * from '@webmcp-validator/core';
+
+export interface AuditOptions {
+  /** Linter options */
+  linter?: LinterOptions;
+  /** Scorer options */
+  scorer?: ScorerOptions;
+}
 
 /**
  * Public WebMCP Validator SDK entry point
@@ -32,16 +42,26 @@ export class WebMCPValidator {
   }
 
   /**
-   * Scan and audit a target URL for WebMCP readiness
+   * Calculate readiness score and generate audit report for a detection and lint result
    */
-  static async audit(target: string | ScanTargetOptions) {
+  static score(
+    detection: WebMCPDetectionResult,
+    lint: LintResult,
+    options?: ScorerOptions
+  ): WebMCPReadinessReport {
+    return calculateReadinessScore(detection, lint, options);
+  }
+
+  /**
+   * Complete end-to-end audit: Scan target, run linter rules, and calculate AI readiness score
+   */
+  static async audit(
+    target: string | ScanTargetOptions,
+    options?: AuditOptions
+  ): Promise<WebMCPReadinessReport> {
     const detection = await this.scan(target);
-    return {
-      url: typeof target === 'string' ? target : target.url,
-      detection,
-      score: 0,
-      timestamp: Date.now(),
-    };
+    const lintResult = await this.lint(detection, options?.linter);
+    return this.score(detection, lintResult, options?.scorer);
   }
 }
 
@@ -49,3 +69,4 @@ export class WebMCPValidator {
  * Convenience alias for WebMCPValidator
  */
 export const WebMCP = WebMCPValidator;
+

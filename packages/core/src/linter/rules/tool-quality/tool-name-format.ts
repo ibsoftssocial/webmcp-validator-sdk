@@ -40,6 +40,21 @@ export const toolNameFormatRule: LintRule = {
       return findings;
     }
 
+    // Check illegal characters (spaces, symbols, invalid start)
+    if (/[^a-zA-Z0-9_.-]/.test(name) || !/^[a-zA-Z]/.test(name)) {
+      findings.push({
+        ruleId: this.id,
+        title: this.title,
+        message: `Tool name "${name}" contains invalid characters. Names must start with a letter and contain only alphanumeric characters, underscores, dashes, or dots.`,
+        severity: this.defaultSeverity,
+        category: this.category,
+        toolName: name,
+        suggestion: `Use a valid name format matching ${TOOL_NAME_REGEX}.`,
+        docsUrl: this.docsUrl,
+      });
+      return findings;
+    }
+
     // Check uppercase or camelCase
     if (/[A-Z]/.test(name)) {
       const suggested = toSnakeCase(name);
@@ -54,20 +69,6 @@ export const toolNameFormatRule: LintRule = {
         docsUrl: this.docsUrl,
       });
       return findings;
-    }
-
-    // Check standard regex: must start with letter, valid chars
-    if (!TOOL_NAME_REGEX.test(name)) {
-      findings.push({
-        ruleId: this.id,
-        title: this.title,
-        message: `Tool name "${name}" contains invalid characters. Names must start with a letter and contain only alphanumeric, underscores, hyphens, or dots.`,
-        severity: this.defaultSeverity,
-        category: this.category,
-        toolName: name,
-        suggestion: `Use a valid name format such as "${toSnakeCase(name)}".`,
-        docsUrl: this.docsUrl,
-      });
     }
 
     return findings;

@@ -32,11 +32,11 @@ function createMockDetection(overrides: Partial<WebMCPDetectionResult> = {}): We
 function createMockTool(overrides: Partial<DiscoveredTool> = {}): DiscoveredTool {
   return {
     name: 'search_catalog',
-    description: 'Search catalog by keyword and category filters',
+    description: 'Searches catalog by query term and returns products.',
     inputSchema: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: 'Search term query' },
+        query: { type: 'string', description: 'Product search keyword' },
       },
       required: ['query'],
     },
@@ -51,9 +51,9 @@ function createMockTool(overrides: Partial<DiscoveredTool> = {}): DiscoveredTool
 
 describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   describe('TQ-001: tool-name-format', () => {
-    it('passes for valid snake_case tool name', () => {
+    it('passes for valid snake_case tool name', async () => {
       const tool = createMockTool({ name: 'search_flights_now' });
-      const findings = toolNameFormatRule.validate({
+      const findings = await toolNameFormatRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -61,9 +61,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings).toHaveLength(0);
     });
 
-    it('warns on camelCase or uppercase and suggests snake_case', () => {
+    it('warns on camelCase or uppercase and suggests snake_case', async () => {
       const tool = createMockTool({ name: 'searchFlights' });
-      const findings = toolNameFormatRule.validate({
+      const findings = await toolNameFormatRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -73,9 +73,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.suggestion).toContain('search_flights');
     });
 
-    it('flags names exceeding 64 characters', () => {
+    it('flags names exceeding 64 characters', async () => {
       const tool = createMockTool({ name: 'a'.repeat(65) });
-      const findings = toolNameFormatRule.validate({
+      const findings = await toolNameFormatRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -85,9 +85,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.message).toContain('exceeds the maximum length');
     });
 
-    it('flags invalid characters such as spaces or symbols', () => {
+    it('flags invalid characters such as spaces or symbols', async () => {
       const tool = createMockTool({ name: 'search flights!' });
-      const findings = toolNameFormatRule.validate({
+      const findings = await toolNameFormatRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -98,9 +98,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('TQ-002: tool-description-required', () => {
-    it('passes for informative descriptions', () => {
+    it('passes for informative descriptions', async () => {
       const tool = createMockTool({ description: 'Look up customer account balance by account ID.' });
-      const findings = toolDescriptionRequiredRule.validate({
+      const findings = await toolDescriptionRequiredRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -108,9 +108,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings).toHaveLength(0);
     });
 
-    it('flags empty descriptions as error', () => {
+    it('flags empty descriptions as error', async () => {
       const tool = createMockTool({ description: '' });
-      const findings = toolDescriptionRequiredRule.validate({
+      const findings = await toolDescriptionRequiredRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -119,9 +119,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.severity).toBe('error');
     });
 
-    it('warns on placeholder descriptions', () => {
+    it('warns on placeholder descriptions', async () => {
       const tool = createMockTool({ description: 'placeholder' });
-      const findings = toolDescriptionRequiredRule.validate({
+      const findings = await toolDescriptionRequiredRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -131,9 +131,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.message).toContain('placeholder');
     });
 
-    it('warns on brief descriptions under 10 chars', () => {
+    it('warns on brief descriptions under 10 chars', async () => {
       const tool = createMockTool({ description: 'Short' });
-      const findings = toolDescriptionRequiredRule.validate({
+      const findings = await toolDescriptionRequiredRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -144,7 +144,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('TQ-003: tool-parameters-described', () => {
-    it('passes when all parameters have descriptions', () => {
+    it('passes when all parameters have descriptions', async () => {
       const tool = createMockTool({
         inputSchema: {
           type: 'object',
@@ -154,7 +154,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
           },
         },
       });
-      const findings = toolParametersDescribedRule.validate({
+      const findings = await toolParametersDescribedRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -162,7 +162,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings).toHaveLength(0);
     });
 
-    it('warns when a parameter is missing a description', () => {
+    it('warns when a parameter is missing a description', async () => {
       const tool = createMockTool({
         inputSchema: {
           type: 'object',
@@ -172,7 +172,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
           },
         },
       });
-      const findings = toolParametersDescribedRule.validate({
+      const findings = await toolParametersDescribedRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -183,9 +183,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('BP-001: tool-input-schema-valid', () => {
-    it('passes on valid input schema', () => {
+    it('passes on valid input schema', async () => {
       const tool = createMockTool();
-      const findings = toolInputSchemaValidRule.validate({
+      const findings = await toolInputSchemaValidRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -193,9 +193,9 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings).toHaveLength(0);
     });
 
-    it('flags non-object schema types', () => {
+    it('flags non-object schema types', async () => {
       const tool = createMockTool({ inputSchema: { type: 'string' as any } });
-      const findings = toolInputSchemaValidRule.validate({
+      const findings = await toolInputSchemaValidRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -204,7 +204,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.severity).toBe('error');
     });
 
-    it('flags required fields not listed in properties', () => {
+    it('flags required fields not listed in properties', async () => {
       const tool = createMockTool({
         inputSchema: {
           type: 'object',
@@ -214,7 +214,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
           required: ['foo', 'bar_ghost'],
         },
       });
-      const findings = toolInputSchemaValidRule.validate({
+      const findings = await toolInputSchemaValidRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -225,14 +225,14 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('BP-002: tool-input-schema-empty', () => {
-    it('emits info finding when input schema has zero properties', () => {
+    it('emits info finding when input schema has zero properties', async () => {
       const tool = createMockTool({
         inputSchema: {
           type: 'object',
           properties: {},
         },
       });
-      const findings = toolInputSchemaEmptyRule.validate({
+      const findings = await toolInputSchemaEmptyRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -243,7 +243,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('SEC-001: tool-safety-mutating-confirmation', () => {
-    it('warns when destructive tool lacks confirmationHint', () => {
+    it('warns when destructive tool lacks confirmationHint', async () => {
       const tool = createMockTool({
         name: 'delete_user_account',
         annotations: {
@@ -251,7 +251,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
           confirmationHint: false,
         },
       });
-      const findings = toolSafetyMutatingConfirmationRule.validate({
+      const findings = await toolSafetyMutatingConfirmationRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -261,7 +261,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.suggestion).toContain('confirmationHint');
     });
 
-    it('passes when destructive tool declares confirmationHint: true', () => {
+    it('passes when destructive tool declares confirmationHint: true', async () => {
       const tool = createMockTool({
         name: 'delete_user_account',
         annotations: {
@@ -269,7 +269,7 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
           confirmationHint: true,
         },
       });
-      const findings = toolSafetyMutatingConfirmationRule.validate({
+      const findings = await toolSafetyMutatingConfirmationRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -279,14 +279,14 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('SEC-002: tool-readonly-conflict', () => {
-    it('flags conflicting readOnlyHint and destructiveHint', () => {
+    it('flags conflicting readOnlyHint and destructiveHint', async () => {
       const tool = createMockTool({
         annotations: {
           readOnlyHint: true,
           destructiveHint: true,
         },
       });
-      const findings = toolReadOnlyConflictRule.validate({
+      const findings = await toolReadOnlyConflictRule.validate({
         detection: createMockDetection(),
         tool,
         allTools: [tool],
@@ -297,16 +297,16 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('IMP-001: webmcp-api-presence', () => {
-    it('passes when modelContext or tools exist', () => {
-      const findings = webmcpApiPresenceRule.validate({
+    it('passes when modelContext or tools exist', async () => {
+      const findings = await webmcpApiPresenceRule.validate({
         detection: createMockDetection({ hasNavigatorModelContext: true }),
         allTools: [],
       });
       expect(findings).toHaveLength(0);
     });
 
-    it('errors when no WebMCP API is present', () => {
-      const findings = webmcpApiPresenceRule.validate({
+    it('errors when no WebMCP API is present', async () => {
+      const findings = await webmcpApiPresenceRule.validate({
         detection: createMockDetection({
           hasNavigatorModelContext: false,
           imperativeDetected: false,
@@ -321,10 +321,10 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('IMP-002: tool-duplicate-names', () => {
-    it('flags duplicate tool names', () => {
+    it('flags duplicate tool names', async () => {
       const tool1 = createMockTool({ name: 'fetch_data' });
       const tool2 = createMockTool({ name: 'fetch_data' });
-      const findings = toolDuplicateNamesRule.validate({
+      const findings = await toolDuplicateNamesRule.validate({
         detection: createMockDetection(),
         allTools: [tool1, tool2],
       });
@@ -332,10 +332,10 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.message).toContain('Duplicate tool name "fetch_data"');
     });
 
-    it('passes when all names are distinct', () => {
+    it('passes when all names are distinct', async () => {
       const tool1 = createMockTool({ name: 'tool_a' });
       const tool2 = createMockTool({ name: 'tool_b' });
-      const findings = toolDuplicateNamesRule.validate({
+      const findings = await toolDuplicateNamesRule.validate({
         detection: createMockDetection(),
         allTools: [tool1, tool2],
       });
@@ -344,8 +344,8 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('DISC-001: manifest-link-present', () => {
-    it('suggests manifest link when missing', () => {
-      const findings = manifestLinkPresentRule.validate({
+    it('suggests manifest link when missing', async () => {
+      const findings = await manifestLinkPresentRule.validate({
         detection: createMockDetection({
           declarativeMetadata: { manifestLinks: [], helpLinks: [], originTrialTokens: [] },
           manifestDetails: { hasManifest: false, tools: [], errors: [] },
@@ -356,8 +356,8 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings[0]!.severity).toBe('info');
     });
 
-    it('passes when manifest is linked', () => {
-      const findings = manifestLinkPresentRule.validate({
+    it('passes when manifest is linked', async () => {
+      const findings = await manifestLinkPresentRule.validate({
         detection: createMockDetection({
           declarativeMetadata: { manifestLinks: ['/mcp/manifest.json'], helpLinks: [], originTrialTokens: [] },
         }),
@@ -368,8 +368,8 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('DISC-002: agent-directives-present', () => {
-    it('suggests llms.txt when missing', () => {
-      const findings = agentDirectivesPresentRule.validate({
+    it('suggests llms.txt when missing', async () => {
+      const findings = await agentDirectivesPresentRule.validate({
         detection: createMockDetection({
           hasLlmsTxt: false,
           agentDirectives: {
@@ -385,8 +385,8 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       expect(findings.some((f) => f.message.includes('/llms.txt'))).toBe(true);
     });
 
-    it('warns when robots.txt restricts AI crawlers', () => {
-      const findings = agentDirectivesPresentRule.validate({
+    it('warns when robots.txt restricts AI crawlers', async () => {
+      const findings = await agentDirectivesPresentRule.validate({
         detection: createMockDetection({
           hasLlmsTxt: true,
           agentDirectives: {

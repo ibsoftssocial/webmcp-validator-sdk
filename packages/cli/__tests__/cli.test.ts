@@ -119,4 +119,64 @@ describe('CLI Integration Tests (Day 5 Flags & Diagnostics)', () => {
     const resWithoutLint = JSON.parse(withoutLint);
     expect(resWithoutLint.lint).toBeUndefined();
   });
+
+  it('renders pretty terminal output with WebMCP AI Readiness Score banner and category table', async () => {
+    const url = server.getUrl('/perfect');
+    const { stdout } = await execFileAsync('node', [CLI_PATH, 'scan', url]);
+
+    expect(stdout).toContain('WebMCP AI Readiness Score:');
+    expect(stdout).toContain('Overall Score:');
+    expect(stdout).toContain('Pass Threshold:');
+    expect(stdout).toContain('Category');
+    expect(stdout).toContain('Raw Score');
+    expect(stdout).toContain('Weighted');
+  });
+
+  it('attaches readiness report to JSON output with overallScore and categories', async () => {
+    const url = server.getUrl('/perfect');
+    const { stdout } = await execFileAsync('node', [CLI_PATH, 'scan', url, '--format', 'json']);
+
+    const res = JSON.parse(stdout);
+    expect(res.readiness).toBeDefined();
+    expect(res.readiness.overallScore).toBeGreaterThanOrEqual(90);
+    expect(res.readiness.grade).toBe('A');
+    expect(res.readiness.passed).toBe(true);
+    expect(res.readiness.categories.implementation).toBeDefined();
+    expect(res.readiness.categories['tool-quality']).toBeDefined();
+  });
+
+  it('enforces --fail-under flag: succeeds when threshold met, exits 1 when score is below threshold', async () => {
+    const perfectUrl = server.getUrl('/perfect');
+    // Passes threshold 80
+    const passResult = await execFileAsync('node', [
+      CLI_PATH,
+      'scan',
+      perfectUrl,
+      '--fail-under',
+      '80',
+      '--format',
+      'json',
+    ]);
+    expect(passResult.stdout).toBeDefined();
+
+    // Fails impossible threshold 100 on /malformed
+    const malformedUrl = server.getUrl('/malformed');
+    let failed = false;
+    try {
+      await execFileAsync('node', [
+        CLI_PATH,
+        'scan',
+        malformedUrl,
+        '--fail-under',
+        '95',
+        '--format',
+        'json',
+      ]);
+    } catch (err: any) {
+      failed = true;
+      expect(err.code).toBe(1);
+    }
+    expect(failed).toBe(true);
+  });
 });
+

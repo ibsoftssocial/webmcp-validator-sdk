@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FindingCategorySchema, RuleFindingSchema } from './finding.js';
+import { FindingCategory, FindingCategorySchema, FindingSeverity, RuleFindingSchema } from './finding.js';
 import { DiscoveredToolSchema } from './scanner.js';
 
 export const GradeRatingSchema = z.enum(['A', 'B', 'C', 'D', 'F']);
@@ -21,7 +21,7 @@ export type CategoryScore = z.infer<typeof CategoryScoreSchema>;
 
 export const WebMCPReadinessReportSchema = z.object({
   /** Target URL audited */
-  url: string(),
+  url: z.string(),
   /** Timestamp when audit completed */
   timestamp: z.number(),
   /** Overall readiness score from 0 to 100 */
@@ -49,8 +49,18 @@ export const WebMCPReadinessReportSchema = z.object({
   }),
 });
 
-function string() {
-  return z.string();
+export type WebMCPReadinessReport = z.infer<typeof WebMCPReadinessReportSchema>;
+
+export interface ScorerOptions {
+  /** Passing score threshold (default: 80) */
+  passingScore?: number;
+  /** Custom category weights (default: CATEGORY_WEIGHTS) */
+  categoryWeights?: Partial<Record<FindingCategory, number>>;
+  /** Custom severity penalties (default: SEVERITY_PENALTIES) */
+  severityPenalties?: Partial<Record<FindingSeverity, number>>;
+  /** Optional RuleRegistry to look up rule.penaltyPoints */
+  ruleRegistry?: any;
+  /** Penalty calculation strategy: 'rule' (default) or 'severity' */
+  penaltyStrategy?: 'rule' | 'severity';
 }
 
-export type WebMCPReadinessReport = z.infer<typeof WebMCPReadinessReportSchema>;

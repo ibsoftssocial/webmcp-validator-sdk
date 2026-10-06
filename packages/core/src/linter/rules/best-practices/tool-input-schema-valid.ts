@@ -62,6 +62,24 @@ export const toolInputSchemaValidRule: LintRule = {
       }
     }
 
+    // Check that defined properties declare a type
+    if (schema.properties && typeof schema.properties === 'object') {
+      for (const [propName, propDef] of Object.entries(schema.properties)) {
+        if (!propDef || typeof propDef !== 'object' || !(propDef as any).type) {
+          findings.push({
+            ruleId: this.id,
+            title: this.title,
+            message: `Property "${propName}" on tool "${tool.name}" is missing a valid data type.`,
+            severity: 'error',
+            category: this.category,
+            toolName: tool.name,
+            suggestion: `Add a "type" declaration (e.g. "string", "number", "boolean") to property "${propName}".`,
+            docsUrl: this.docsUrl,
+          });
+        }
+      }
+    }
+
     return findings;
   },
 };

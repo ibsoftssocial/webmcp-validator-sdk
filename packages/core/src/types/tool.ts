@@ -59,11 +59,11 @@ export type ToolAnnotations = z.infer<typeof ToolAnnotationsSchema>;
  */
 export const ToolDefinitionSchema = z.object({
   /** Unique tool identifier (lowercase, alphanumeric, hyphens, underscores, dots) */
-  name: z.string().min(1).max(64),
+  name: z.string(),
   /** Natural language description explaining what the tool does to an LLM */
-  description: z.string().min(1),
+  description: z.string().optional().default(''),
   /** Input parameters JSON Schema */
-  inputSchema: JSONSchemaObjectSchema,
+  inputSchema: z.record(z.string(), z.unknown()).optional().default({ type: 'object' }),
   /** Optional behavioral annotations */
   annotations: ToolAnnotationsSchema.optional(),
   /** Optional metadata about the tool source / location */

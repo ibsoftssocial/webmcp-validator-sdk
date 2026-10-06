@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import ora from 'ora';
 import Table from 'cli-table3';
-import { scanUrl, lintWebMCP } from 'webmcp-validator-sdk';
+import { scanUrl, lintWebMCP, calculateReadinessScore, GradeRating } from 'webmcp-validator-sdk';
 
 const program = new Command();
 
@@ -10,6 +10,21 @@ program
   .name('webmcp-validator')
   .description('Audit, scan, and validate WebMCP tools on websites')
   .version('0.1.0');
+
+function getGradeBadge(grade: GradeRating): string {
+  switch (grade) {
+    case 'A':
+      return chalk.bgGreen.black.bold(' A ');
+    case 'B':
+      return chalk.bgBlue.white.bold(' B ');
+    case 'C':
+      return chalk.bgYellow.black.bold(' C ');
+    case 'D':
+      return chalk.bgMagenta.white.bold(' D ');
+    case 'F':
+      return chalk.bgRed.white.bold(' F ');
+  }
+}
 
 function collectHeaders(value: string, previous: Record<string, string> = {}): Record<string, string> {
   const colonIdx = value.indexOf(':');
@@ -39,7 +54,7 @@ program
   .option('--skip-rules <ids>', 'Comma-separated list of rule IDs to skip')
   .option('-o, --output <file>', 'Save output report to file (json, md, or html)')
   .option('--format <type>', 'Output format: pretty, json, markdown, html', 'pretty')
-  .option('--fail-under <score>', 'Exit with code 1 if score is below this threshold', '80')
+  .option('--fail-under <score>', 'Exit with code 1 if score is below this threshold')
   .action(async (url: string, options: any) => {
     const timeoutMs = parseInt(options.timeout, 10) || 15000;
     const spinner = ora(`Launching Chromium and scanning ${chalk.cyan(url)}...`).start();
@@ -59,6 +74,9 @@ program
       spinner.succeed(`Scan completed in ${chalk.yellow(result.durationMs + 'ms')}`);
 
       let lintResult: any = null;
+      let readinessReport: any = null;
+      const failUnderThreshold = options.failUnder ? parseInt(options.failUnder, 10) : undefined;
+
       if (options.lint !== false) {
         lintResult = await lintWebMCP(result, {
           minSeverity: options.minSeverity,
@@ -66,11 +84,24 @@ program
           includeRules: options.rules ? options.rules.split(',').map((s: string) => s.trim()) : undefined,
           excludeRules: options.skipRules ? options.skipRules.split(',').map((s: string) => s.trim()) : undefined,
         });
+
+        readinessReport = calculateReadinessScore(result, lintResult, {
+          passingScore: failUnderThreshold ?? 80,
+        });
       }
 
       if (options.format === 'json') {
-        const jsonOutput = lintResult ? { ...result, lint: lintResult } : result;
+        const jsonOutput = lintResult
+          ? { ...result, lint: lintResult, readiness: readinessReport }
+          : result;
         console.log(JSON.stringify(jsonOutput, null, 2));
+        if (
+          failUnderThreshold !== undefined &&
+          readinessReport &&
+          readinessReport.overallScore < failUnderThreshold
+        ) {
+          process.exit(1);
+        }
         return;
       }
 
@@ -183,11 +214,71 @@ program
         }
       }
 
+      if (readinessReport) {
+        console.log('\n' + chalk.bold.underline('WebMCP AI Readiness Score:'));
+        console.log(
+          `  ${chalk.bold('Overall Score:')}           ${chalk.bold(
+            readinessReport.overallScore.toString() + '/100'
+          )}  [Grade ${getGradeBadge(readinessReport.grade)}]  ${
+            readinessReport.passed ? chalk.green.bold('✔ PASSED') : chalk.red.bold('✖ FAILED')
+          }`
+        );
+        console.log(
+          `  ${chalk.bold('Pass Threshold:')}          Score ≥ ${
+            failUnderThreshold !== undefined ? chalk.bold(failUnderThreshold.toString()) : '80 (default)'
+          }`
+        );
+
+        const scoreTable = new Table({
+          head: [
+            chalk.cyan('Category'),
+            chalk.cyan('Weight'),
+            chalk.cyan('Raw Score'),
+            chalk.cyan('Weighted'),
+            chalk.cyan('Errors'),
+            chalk.cyan('Warnings'),
+            chalk.cyan('Info'),
+          ],
+          colWidths: [20, 10, 13, 13, 10, 11, 8],
+        });
+
+        for (const [cat, data] of Object.entries(readinessReport.categories) as [string, any][]) {
+          const catLabel = cat
+            .split('-')
+            .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+            .join(' ');
+          scoreTable.push([
+            catLabel,
+            `${data.weight}%`,
+            `${data.score}/100`,
+            `${data.weightedScore.toFixed(1)} / ${data.weight}`,
+            data.findingsCount.errors > 0 ? chalk.red(data.findingsCount.errors) : chalk.gray('0'),
+            data.findingsCount.warnings > 0 ? chalk.yellow(data.findingsCount.warnings) : chalk.gray('0'),
+            data.findingsCount.info > 0 ? chalk.cyan(data.findingsCount.info) : chalk.gray('0'),
+          ]);
+        }
+
+        console.log(scoreTable.toString());
+      }
+
       if (result.scanErrors.length > 0) {
         console.log('\n' + chalk.red.bold('Scan Warnings / Errors:'));
         for (const err of result.scanErrors) {
           console.log(`  ${chalk.red('⚠')} ${err}`);
         }
+      }
+
+      if (
+        failUnderThreshold !== undefined &&
+        readinessReport &&
+        readinessReport.overallScore < failUnderThreshold
+      ) {
+        console.log(
+          chalk.red.bold(
+            `\n✖ Readiness score (${readinessReport.overallScore}) is below threshold (--fail-under ${failUnderThreshold}). Exiting with code 1.`
+          )
+        );
+        process.exit(1);
       }
 
       console.log('');
