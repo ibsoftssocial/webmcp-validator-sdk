@@ -44,8 +44,16 @@ export const ToolAnnotationsSchema = z.object({
   readOnlyHint: z.boolean().optional(),
   /** Indicates tool can mutate, delete, or perform destructive operations */
   destructiveHint: z.boolean().optional(),
-  /** Indicates explicit user confirmation is requested before executing */
+  /**
+   * Official Chrome 154.0.8017.0+ WebMCP member:
+   * Set consequentialHint to true when registering tools that perform high-stakes, irreversible, or real-world actions
+   * (e.g. booking flights, transferring funds, submitting forms, or deleting data).
+   */
+  consequentialHint: z.boolean().optional(),
+  /** Legacy alias for consequentialHint */
   confirmationHint: z.boolean().optional(),
+  /** Indicates tool input or output may contain untrusted third-party content */
+  untrustedContentHint: z.boolean().optional(),
   /** Indicates operation may take extended duration */
   longRunningHint: z.boolean().optional(),
   /** Human-readable title for permission/consent dialogues */

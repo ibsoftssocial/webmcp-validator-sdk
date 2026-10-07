@@ -5,7 +5,7 @@ const MUTATING_NAME_PREFIXES = /^(delete|remove|cancel|drop|destroy|purge|checko
 export const toolSafetyMutatingConfirmationRule: LintRule = {
   id: 'SEC-001',
   title: 'Mutating Tool Confirmation Hint',
-  description: 'Tools performing state mutation, checkout, or destructive operations should declare confirmationHint: true.',
+  description: 'Tools performing state mutation, checkout, or destructive operations should declare consequentialHint: true.',
   category: 'security',
   defaultSeverity: 'warning',
   penaltyPoints: 8,
@@ -24,15 +24,17 @@ export const toolSafetyMutatingConfirmationRule: LintRule = {
 
     const requiresConfirmation = isDestructive || (isExplicitlyMutating && hasMutatingName) || hasMutatingName;
 
-    if (requiresConfirmation && !ann.confirmationHint) {
+    const hasConfirmationOrConsequential = ann.consequentialHint === true || ann.confirmationHint === true;
+
+    if (requiresConfirmation && !hasConfirmationOrConsequential) {
       findings.push({
         ruleId: this.id,
         title: this.title,
-        message: `Tool "${tool.name}" appears to perform mutating or state-changing actions, but does not specify "confirmationHint: true".`,
+        message: `Tool "${tool.name}" appears to perform mutating or state-changing actions, but does not specify "consequentialHint: true".`,
         severity: this.defaultSeverity,
         category: this.category,
         toolName: tool.name,
-        suggestion: `Add "annotations: { confirmationHint: true }" so AI agents will request user confirmation before executing "${tool.name}".`,
+        suggestion: `Add "annotations: { consequentialHint: true }" so AI agents will request user confirmation before executing "${tool.name}".`,
         docsUrl: this.docsUrl,
       });
     }

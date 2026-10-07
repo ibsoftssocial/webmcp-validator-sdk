@@ -151,6 +151,7 @@ export function parseDeclarativeHtml(html: string, baseUrl: string): Declarative
       inputSchema,
       annotations: {
         readOnlyHint: isReadOnly,
+        consequentialHint: !isReadOnly && method === 'POST',
         confirmationHint: !isReadOnly && method === 'POST',
       },
       source: 'declarative',

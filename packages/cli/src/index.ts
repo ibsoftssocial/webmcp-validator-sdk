@@ -215,7 +215,7 @@ program
             sourceBadge,
             tool.description || chalk.gray('(No description)'),
             tool.annotations?.readOnlyHint ? chalk.green('Yes') : chalk.gray('No'),
-            tool.annotations?.confirmationHint ? chalk.yellow('Yes') : chalk.gray('No'),
+            (tool.annotations?.consequentialHint || tool.annotations?.confirmationHint) ? chalk.yellow('Yes') : chalk.gray('No'),
           ]);
         }
 

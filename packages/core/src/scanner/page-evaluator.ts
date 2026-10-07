@@ -176,6 +176,7 @@ export function evaluatePageWebMCP(): PageEvaluationData {
         inputSchema,
         annotations: {
           readOnlyHint: isReadOnly,
+          consequentialHint: !isReadOnly && method === 'POST',
           confirmationHint: !isReadOnly && method === 'POST',
         },
         source: 'declarative',
@@ -293,12 +294,14 @@ export function evaluatePageWebMCP(): PageEvaluationData {
 
   let hasAgentInvokedOrHumanInLoop = false;
   try {
-    const hasConfirmationHint = sanitizedTools.some((t: any) => t?.annotations?.confirmationHint === true) || declarativeTools.some((t: any) => t?.annotations?.confirmationHint === true);
+    const hasConfirmationHint =
+      sanitizedTools.some((t: any) => t?.annotations?.consequentialHint === true || t?.annotations?.confirmationHint === true) ||
+      declarativeTools.some((t: any) => t?.annotations?.consequentialHint === true || t?.annotations?.confirmationHint === true);
     const hasAgentInvokedAttr = !!(doc?.querySelector('[agentinvoked], [data-agent-invoked], [human-in-the-loop], [data-human-in-the-loop]'));
     let hasScriptMention = false;
     try {
       const scripts = doc ? Array.from(doc.querySelectorAll('script')).map((s: any) => s.textContent || '').join(' ') : '';
-      hasScriptMention = /agentinvoked|humaninloop|human-in-loop|confirmationhint/i.test(scripts);
+      hasScriptMention = /agentinvoked|humaninloop|human-in-loop|consequentialhint|confirmationhint/i.test(scripts);
     } catch {}
     hasAgentInvokedOrHumanInLoop = hasConfirmationHint || hasAgentInvokedAttr || hasScriptMention || !!win.__webmcp_agent_invoked;
   } catch {}

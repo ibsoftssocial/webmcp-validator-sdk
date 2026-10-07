@@ -96,7 +96,7 @@ export function renderTerminalReport(
     for (const tool of report.tools) {
       const srcBadge = gray(`[${tool.source}]`);
       const ro = tool.annotations?.readOnlyHint ? green('(readOnly)') : '';
-      const conf = tool.annotations?.confirmationHint ? yellow('(confirmReq)') : '';
+      const conf = (tool.annotations?.consequentialHint || tool.annotations?.confirmationHint) ? yellow('(confirmReq)') : '';
       lines.push(`  • ${bold(tool.name)} ${srcBadge} ${ro} ${conf}`.trim());
       if (tool.description) {
         lines.push(`    ${gray(tool.description)}`);

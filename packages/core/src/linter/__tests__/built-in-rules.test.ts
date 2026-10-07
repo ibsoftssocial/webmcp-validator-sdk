@@ -243,11 +243,12 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
   });
 
   describe('SEC-001: tool-safety-mutating-confirmation', () => {
-    it('warns when destructive tool lacks confirmationHint', async () => {
+    it('warns when destructive tool lacks consequentialHint', async () => {
       const tool = createMockTool({
         name: 'delete_user_account',
         annotations: {
           destructiveHint: true,
+          consequentialHint: false,
           confirmationHint: false,
         },
       });
@@ -258,10 +259,26 @@ describe('Built-in WebMCP Lint Rules (Day 6)', () => {
       });
       expect(findings).toHaveLength(1);
       expect(findings[0]!.severity).toBe('warning');
-      expect(findings[0]!.suggestion).toContain('confirmationHint');
+      expect(findings[0]!.suggestion).toContain('consequentialHint');
     });
 
-    it('passes when destructive tool declares confirmationHint: true', async () => {
+    it('passes when destructive tool declares consequentialHint: true', async () => {
+      const tool = createMockTool({
+        name: 'delete_user_account',
+        annotations: {
+          destructiveHint: true,
+          consequentialHint: true,
+        },
+      });
+      const findings = await toolSafetyMutatingConfirmationRule.validate({
+        detection: createMockDetection(),
+        tool,
+        allTools: [tool],
+      });
+      expect(findings).toHaveLength(0);
+    });
+
+    it('passes when destructive tool declares confirmationHint: true (legacy alias)', async () => {
       const tool = createMockTool({
         name: 'delete_user_account',
         annotations: {

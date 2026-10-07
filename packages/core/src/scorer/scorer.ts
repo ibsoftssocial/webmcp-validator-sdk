@@ -237,7 +237,7 @@ export function evaluateCategoryChecklist(
       );
       const hasAgentInvoked = Boolean(
         (detection as any).hasAgentInvokedOrHumanInLoop ||
-        detection.tools.some((t) => t.annotations?.confirmationHint || t.annotations?.readOnlyHint !== undefined)
+        detection.tools.some((t) => t.annotations?.consequentialHint || t.annotations?.confirmationHint || t.annotations?.readOnlyHint !== undefined)
       );
 
       return [

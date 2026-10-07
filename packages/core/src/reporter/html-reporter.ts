@@ -703,7 +703,7 @@ export function renderHtmlReport(
               <div class="tool-badges">
                 <span class="badge badge-source">${escapeHtml(tool.source)}</span>
                 ${tool.annotations?.readOnlyHint ? '<span class="badge badge-readonly">Read Only</span>' : ''}
-                ${tool.annotations?.confirmationHint ? '<span class="badge badge-confirm">Confirmation Req.</span>' : ''}
+                ${tool.annotations?.consequentialHint || tool.annotations?.confirmationHint ? '<span class="badge badge-confirm">Confirmation Req.</span>' : ''}
               </div>
             </div>
             <div class="tool-desc">${escapeHtml(tool.description || 'No description provided.')}</div>

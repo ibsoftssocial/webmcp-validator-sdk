@@ -92,7 +92,7 @@ export function renderMarkdownReport(
     lines.push('| :--- | :---: | :---: | :---: | :--- |');
     for (const tool of report.tools) {
       const readOnly = tool.annotations?.readOnlyHint ? '✅' : '—';
-      const confirm = tool.annotations?.confirmationHint ? '⚠️ Required' : '—';
+      const confirm = (tool.annotations?.consequentialHint || tool.annotations?.confirmationHint) ? '⚠️ Required' : '—';
       const desc = (tool.description || '*No description*').replace(/\n+/g, ' ');
       lines.push(`| \`${tool.name}\` | \`${tool.source}\` | ${readOnly} | ${confirm} | ${desc} |`);
     }
