@@ -312,6 +312,27 @@ program
         }
 
         console.log(scoreTable.toString());
+
+        console.log('\n' + chalk.bold.underline('AI Readiness Checklist Breakdown:'));
+        for (const [catName, cat] of Object.entries(readinessReport.categories) as [string, any][]) {
+          if (cat.checklist && cat.checklist.length > 0) {
+            const catTitle =
+              cat.title ||
+              catName
+                .split('-')
+                .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ');
+            console.log(`\n  ${chalk.bold(catTitle)} ${chalk.cyan(`(${cat.weightedScore.toFixed(0)}/${cat.weight} pts)`)}:`);
+            for (const item of cat.checklist) {
+              const checkMark = item.passed ? chalk.green('✔') : chalk.red('✖');
+              const pointsBadge = item.passed
+                ? chalk.green(`[+${item.points} pts]`)
+                : chalk.red(`[0/${item.maxPoints} pts]`);
+              const detailStr = item.details ? chalk.gray(` (${item.details})`) : '';
+              console.log(`    ${checkMark} ${item.name.padEnd(32)} ${pointsBadge}${detailStr}`);
+            }
+          }
+        }
       }
 
       if (options.output) {

@@ -266,13 +266,15 @@ export function evaluatePageWebMCP(): PageEvaluationData {
   let hasChromeBuiltInAI = false;
   try {
     const hasAIObject = !!(
-      win.ai &&
-      (win.ai.languageModel || win.ai.assistant || win.ai.summarizer || win.ai.writer || win.ai.rewriter || win.ai.translator || typeof win.ai === 'object')
+      (win.ai &&
+        (win.ai.languageModel || win.ai.assistant || win.ai.summarizer || win.ai.writer || win.ai.rewriter || win.ai.translator || typeof win.ai === 'object')) ||
+      win.webmcpAI ||
+      win.__webmcpAI
     );
     let hasScriptMention = false;
     try {
       const scripts = doc ? Array.from(doc.querySelectorAll('script')).map((s: any) => s.textContent || '').join(' ') : '';
-      hasScriptMention = /(?:window\.)?ai\.(?:languageModel|assistant|summarizer|writer|rewriter|translator)|LanguageModel\.(?:create|capabilities)|prompt-api/i.test(scripts);
+      hasScriptMention = /(?:window\.)?ai\.(?:languageModel|assistant|summarizer|writer|rewriter|translator)|LanguageModel\.(?:create|capabilities|availability)|['"]LanguageModel['"]\s+in\s+(?:self|window)|Chrome\s+(?:Prompt\s+API|Built-in\s+AI)|prompt-api/i.test(scripts);
     } catch {}
 
     hasChromeBuiltInAI = hasAIObject || hasScriptMention;

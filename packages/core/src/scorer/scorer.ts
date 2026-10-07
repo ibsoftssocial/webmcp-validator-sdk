@@ -110,7 +110,12 @@ export function evaluateCategoryChecklist(
           passed: isFast,
           points: isFast ? 4 : 0,
           maxPoints: 4,
-          details: detection.responseTimeMs !== undefined ? `${detection.responseTimeMs}ms response time` : '< 1500ms nominal response',
+          details:
+            detection.responseTimeMs !== undefined
+              ? isFast
+                ? `${detection.responseTimeMs}ms response time (< 1500ms nominal)`
+                : `${detection.responseTimeMs}ms response time (exceeds 1500ms threshold)`
+              : '< 1500ms nominal response',
         },
         {
           name: 'robots.txt Present',
