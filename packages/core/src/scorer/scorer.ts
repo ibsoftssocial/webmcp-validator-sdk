@@ -438,6 +438,10 @@ export function calculateReadinessScore(
     }
   }
 
+  const countableTools = detection.tools.filter(
+    (t) => t.source === 'imperative' || t.source === 'declarative'
+  );
+
   const report: WebMCPReadinessReport = {
     url: detection.url,
     timestamp: Date.now(),
@@ -445,8 +449,8 @@ export function calculateReadinessScore(
     grade,
     passed,
     categories: categoriesMap,
-    tools: detection.tools,
-    toolCount: detection.tools.length,
+    tools: countableTools,
+    toolCount: countableTools.length,
     findings: lint.findings,
     summary: {
       totalFindings: lint.findings.length,

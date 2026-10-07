@@ -186,9 +186,12 @@ program
       if (result.agentDirectives?.hasRobotsTxt) {
         console.log(`  ${chalk.bold('AI Robots Crawler Policy:')}   ${result.agentDirectives.aiCrawlersAllowed ? chalk.green('✔ Permitted') : chalk.yellow('⚠ Blocked')}`);
       }
-      console.log(`  ${chalk.bold('Total Tools Discovered:')}     ${chalk.bold(result.tools.length.toString())}`);
+      const countableTools = result.tools.filter(
+        (t) => t.source === 'imperative' || t.source === 'declarative'
+      );
+      console.log(`  ${chalk.bold('Total Tools Discovered:')}     ${chalk.bold(countableTools.length.toString())}`);
 
-      if (result.tools.length > 0) {
+      if (countableTools.length > 0) {
         console.log('\n' + chalk.bold('Discovered Tools:'));
         const table = new Table({
           head: [
@@ -202,14 +205,10 @@ program
           wordWrap: true,
         });
 
-        for (const tool of result.tools) {
+        for (const tool of countableTools) {
           let sourceBadge = chalk.blue('imperative');
           if (tool.source === 'declarative') {
             sourceBadge = chalk.yellow('declarative');
-          } else if (tool.source === 'manifest') {
-            sourceBadge = chalk.magenta('manifest');
-          } else if (tool.source === 'llms-txt') {
-            sourceBadge = chalk.cyan('llms.txt');
           }
           table.push([
             chalk.bold(tool.name),
@@ -222,7 +221,7 @@ program
 
         console.log(table.toString());
       } else {
-        console.log(chalk.yellow('\nℹ No WebMCP tools were discovered on this page.'));
+        console.log(chalk.yellow('\nℹ No imperative or declarative WebMCP tools were discovered on this page.'));
       }
 
       if (lintResult) {
