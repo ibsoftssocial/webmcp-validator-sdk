@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const ReportFormatSchema = z.enum(['pretty', 'json', 'markdown', 'html']);
+export const ReportFormatSchema = z.enum(['pretty', 'json', 'markdown', 'html', 'sarif', 'junit']);
 export type ReportFormat = z.infer<typeof ReportFormatSchema>;
 
 export interface ReporterOptions {

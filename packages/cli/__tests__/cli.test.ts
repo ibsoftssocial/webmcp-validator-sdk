@@ -280,6 +280,80 @@ describe('CLI Integration Tests (Day 5 Flags & Diagnostics)', () => {
       expect(parsed.overallScore).toBeGreaterThanOrEqual(90);
       expect(parsed.grade).toBe('A');
     });
+
+    it('outputs valid SARIF v2.1.0 report with --format sarif', async () => {
+      const url = server.getUrl('/perfect');
+      const { stdout } = await execFileAsync('node', [
+        CLI_PATH,
+        'scan',
+        url,
+        '--format',
+        'sarif',
+      ]);
+
+      const parsed = JSON.parse(stdout);
+      expect(parsed.version).toBe('2.1.0');
+      expect(parsed.runs[0].tool.driver.name).toBe('webmcp-validator');
+    });
+
+    it('outputs valid JUnit XML report with --format junit', async () => {
+      const url = server.getUrl('/perfect');
+      const { stdout } = await execFileAsync('node', [
+        CLI_PATH,
+        'scan',
+        url,
+        '--format',
+        'junit',
+      ]);
+
+      expect(stdout).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+      expect(stdout).toContain('<testsuites name="WebMCP AI Readiness Audit"');
+    });
+
+    it('saves SARIF report to disk when -o file has .sarif extension', async () => {
+      const url = server.getUrl('/perfect');
+      const outPath = path.join(tempDir, 'audit.sarif');
+
+      await execFileAsync('node', [CLI_PATH, 'scan', url, '-o', outPath]);
+
+      const exists = await fs.stat(outPath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      const content = await fs.readFile(outPath, 'utf8');
+      const parsed = JSON.parse(content);
+      expect(parsed.version).toBe('2.1.0');
+    });
+
+    it('saves JUnit XML report to disk when -o file has .xml extension', async () => {
+      const url = server.getUrl('/perfect');
+      const outPath = path.join(tempDir, 'junit.xml');
+
+      await execFileAsync('node', [CLI_PATH, 'scan', url, '-o', outPath]);
+
+      const exists = await fs.stat(outPath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      const content = await fs.readFile(outPath, 'utf8');
+      expect(content).toContain('<testsuites name="WebMCP AI Readiness Audit"');
+    });
+
+    it('appends Markdown summary to GITHUB_STEP_SUMMARY when running in GitHub Actions', async () => {
+      const url = server.getUrl('/perfect');
+      const stepSummaryFile = path.join(tempDir, 'step-summary.md');
+      await fs.writeFile(stepSummaryFile, '### Header\n', 'utf8');
+
+      await execFileAsync('node', [CLI_PATH, 'scan', url], {
+        env: {
+          ...process.env,
+          GITHUB_STEP_SUMMARY: stepSummaryFile,
+        },
+      });
+
+      const summaryContent = await fs.readFile(stepSummaryFile, 'utf8');
+      expect(summaryContent).toContain('### Header');
+      expect(summaryContent).toContain('# WebMCP AI Readiness Audit Report');
+      expect(summaryContent).toContain('## Category Breakdown');
+    });
   });
 });
 

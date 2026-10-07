@@ -5,6 +5,8 @@ import { renderJsonReport } from './json-reporter.js';
 import { renderMarkdownReport } from './markdown-reporter.js';
 import { renderHtmlReport } from './html-reporter.js';
 import { renderTerminalReport } from './terminal-reporter.js';
+import { renderSarifReport } from './sarif-reporter.js';
+import { renderJunitReport } from './junit-reporter.js';
 
 /**
  * Infers report format from a file path extension
@@ -18,6 +20,11 @@ export function inferReportFormat(filePath: string): ReportFormat {
     case '.md':
     case '.markdown':
       return 'markdown';
+    case '.sarif':
+      return 'sarif';
+    case '.xml':
+    case '.junit':
+      return 'junit';
     case '.json':
       return 'json';
     default:
@@ -40,6 +47,10 @@ export function generateReport(
       return renderMarkdownReport(report, options);
     case 'html':
       return renderHtmlReport(report, options);
+    case 'sarif':
+      return renderSarifReport(report, options);
+    case 'junit':
+      return renderJunitReport(report, options);
     case 'pretty':
       return renderTerminalReport(report, options);
     default:

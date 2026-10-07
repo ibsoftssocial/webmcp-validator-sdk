@@ -66,6 +66,12 @@ describe('WebMCPValidator SDK (Programmatic API)', () => {
 
     const html = WebMCPValidator.generateReport(report, 'html');
     expect(html).toContain('<!DOCTYPE html>');
+
+    const sarif = WebMCPValidator.generateReport(report, 'sarif');
+    expect(JSON.parse(sarif).version).toBe('2.1.0');
+
+    const junit = WebMCPValidator.generateReport(report, 'junit');
+    expect(junit).toContain('<testsuites name="WebMCP AI Readiness Audit"');
   });
 
   it('persists reports directly to file via SDK saveReport()', async () => {

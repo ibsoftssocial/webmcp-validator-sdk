@@ -7,6 +7,8 @@ import {
   renderMarkdownReport,
   renderHtmlReport,
   renderTerminalReport,
+  renderSarifReport,
+  renderJunitReport,
   generateReport,
   inferReportFormat,
   saveReportToFile,
@@ -369,8 +371,112 @@ describe('WebMCP Reporter Module (Day 8)', () => {
     });
   });
 
+  describe('renderSarifReport()', () => {
+    it('produces valid OASIS SARIF v2.1.0 JSON format', () => {
+      const report = createMockReport();
+      const sarifText = renderSarifReport(report);
+      const sarif = JSON.parse(sarifText);
+
+      expect(sarif.version).toBe('2.1.0');
+      expect(sarif.$schema).toContain('sarif-schema-2.1.0.json');
+      expect(sarif.runs).toHaveLength(1);
+
+      const run = sarif.runs[0];
+      expect(run.tool.driver.name).toBe('webmcp-validator');
+      expect(run.tool.driver.rules.length).toBeGreaterThan(0);
+      expect(run.results.length).toBe(report.findings.length);
+
+      const warningResult = run.results.find((r: any) => r.ruleId === 'SEC-002');
+      expect(warningResult).toBeDefined();
+      expect(warningResult.level).toBe('warning');
+      expect(warningResult.locations[0].physicalLocation.artifactLocation.uri).toBe(report.url);
+      expect(warningResult.locations[0].message.text).toContain('checkout_cart');
+    });
+
+    it('maps findings severity levels correctly to SARIF levels', () => {
+      const report = createMockReport({
+        findings: [
+          {
+            ruleId: 'TEST-ERR',
+            title: 'Critical Error',
+            severity: 'error',
+            category: 'security',
+            message: 'Error finding',
+          },
+          {
+            ruleId: 'TEST-WARN',
+            title: 'Warning Issue',
+            severity: 'warning',
+            category: 'best-practice',
+            message: 'Warning finding',
+          },
+          {
+            ruleId: 'TEST-INFO',
+            title: 'Info Note',
+            severity: 'info',
+            category: 'documentation',
+            message: 'Info finding',
+          },
+        ],
+      });
+
+      const sarif = JSON.parse(renderSarifReport(report));
+      const results = sarif.runs[0].results;
+
+      expect(results[0].level).toBe('error');
+      expect(results[1].level).toBe('warning');
+      expect(results[2].level).toBe('note');
+    });
+  });
+
+  describe('renderJunitReport()', () => {
+    it('produces standard JUnit XML testsuites and testcases', () => {
+      const report = createMockReport();
+      const xml = renderJunitReport(report);
+
+      expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+      expect(xml).toContain('<testsuites name="WebMCP AI Readiness Audit"');
+      expect(xml).toContain('<testsuite name="webmcp.readiness.categories"');
+      expect(xml).toContain('<testsuite name="webmcp.linter.rules"');
+      expect(xml).toContain('classname="webmcp.linter.security"');
+      expect(xml).toContain('name="SEC-002: Confirmation Hint for Sensitive Operations');
+      expect(xml).toContain('<failure message=');
+    });
+
+    it('records failed categories and clean passing states in JUnit', () => {
+      const report = createMockReport({
+        findings: [],
+        summary: {
+          totalFindings: 0,
+          errorCount: 0,
+          warningCount: 0,
+          infoCount: 0,
+          hasNavigatorModelContext: true,
+          hasLlmsTxt: true,
+        },
+      });
+
+      const xml = renderJunitReport(report);
+      expect(xml).toContain('name="All Security & Best-Practice Rules Passed"');
+    });
+  });
+
+  describe('inferReportFormat()', () => {
+    it('correctly infers format from file extensions', () => {
+      expect(inferReportFormat('audit.sarif')).toBe('sarif');
+      expect(inferReportFormat('results.xml')).toBe('junit');
+      expect(inferReportFormat('results.junit')).toBe('junit');
+      expect(inferReportFormat('report.html')).toBe('html');
+      expect(inferReportFormat('report.htm')).toBe('html');
+      expect(inferReportFormat('report.md')).toBe('markdown');
+      expect(inferReportFormat('report.markdown')).toBe('markdown');
+      expect(inferReportFormat('report.json')).toBe('json');
+      expect(inferReportFormat('unknown.ext')).toBe('json');
+    });
+  });
+
   describe('generateReport() dispatcher', () => {
-    it('dispatches to json, markdown, html, and pretty generators correctly', () => {
+    it('dispatches to json, markdown, html, pretty, sarif, and junit generators correctly', () => {
       const report = createMockReport();
 
       const json = generateReport(report, 'json');
@@ -381,6 +487,12 @@ describe('WebMCP Reporter Module (Day 8)', () => {
 
       const html = generateReport(report, 'html');
       expect(html.startsWith('<!DOCTYPE html>')).toBe(true);
+
+      const sarif = generateReport(report, 'sarif');
+      expect(JSON.parse(sarif).version).toBe('2.1.0');
+
+      const junit = generateReport(report, 'junit');
+      expect(junit).toContain('<testsuites name="WebMCP AI Readiness Audit"');
 
       const pretty = generateReport(report, 'pretty', { colors: false });
       expect(pretty).toContain('WebMCP AI Readiness Score:');
@@ -422,6 +534,27 @@ describe('WebMCP Reporter Module (Day 8)', () => {
       const content = await fs.readFile(outPath, 'utf8');
       const parsed = JSON.parse(content);
       expect(parsed.overallScore).toBe(report.overallScore);
+    });
+
+    it('saves a report as SARIF when path has .sarif extension', async () => {
+      const report = createMockReport();
+      const outPath = path.join(tempDir, 'audit.sarif');
+
+      await saveReportToFile(report, outPath);
+
+      const content = await fs.readFile(outPath, 'utf8');
+      const parsed = JSON.parse(content);
+      expect(parsed.version).toBe('2.1.0');
+    });
+
+    it('saves a report as JUnit XML when path has .xml extension', async () => {
+      const report = createMockReport();
+      const outPath = path.join(tempDir, 'junit.xml');
+
+      await saveReportToFile(report, outPath);
+
+      const content = await fs.readFile(outPath, 'utf8');
+      expect(content).toContain('<testsuites name="WebMCP AI Readiness Audit"');
     });
 
     it('allows explicit format override regardless of file extension', async () => {

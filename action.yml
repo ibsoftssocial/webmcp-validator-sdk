@@ -1,0 +1,65 @@
+name: 'WebMCP AI Readiness Validator'
+description: 'Automated CI/CD security and readiness scanner to validate WebMCP tool implementations on websites.'
+author: 'ibsoftssocial'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  url:
+    description: 'Target website URL to scan (e.g., https://example.com or http://localhost:3000)'
+    required: true
+  fail-under:
+    description: 'Minimum AI readiness score threshold (0-100). Fails CI if score is below this value.'
+    required: false
+    default: '80'
+  format:
+    description: 'Output format: pretty, json, markdown, html, sarif, junit'
+    required: false
+    default: 'pretty'
+  output:
+    description: 'Path to export the audit report (e.g., results.sarif, report.html, audit.xml)'
+    required: false
+  mobile:
+    description: 'Emulate mobile device viewport and user-agent (true/false)'
+    required: false
+    default: 'false'
+  timeout:
+    description: 'Scan navigation timeout in milliseconds'
+    required: false
+    default: '20000'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run WebMCP Validator Audit
+      shell: bash
+      run: |
+        ARGS="scan '${{ inputs.url }}'"
+
+        if [ -n "${{ inputs.fail-under }}" ]; then
+          ARGS="$ARGS --fail-under=${{ inputs.fail-under }}"
+        fi
+
+        if [ -n "${{ inputs.format }}" ]; then
+          ARGS="$ARGS --format=${{ inputs.format }}"
+        fi
+
+        if [ -n "${{ inputs.output }}" ]; then
+          ARGS="$ARGS -o '${{ inputs.output }}'"
+        fi
+
+        if [ "${{ inputs.mobile }}" = "true" ]; then
+          ARGS="$ARGS --mobile"
+        fi
+
+        if [ -n "${{ inputs.timeout }}" ]; then
+          ARGS="$ARGS --timeout=${{ inputs.timeout }}"
+        fi
+
+        # Check if local CLI bin exists, otherwise use npx
+        if [ -f "$GITHUB_ACTION_PATH/packages/cli/dist/index.js" ]; then
+          node "$GITHUB_ACTION_PATH/packages/cli/dist/index.js" $ARGS
+        else
+          npx webmcp-validator $ARGS
+        fi

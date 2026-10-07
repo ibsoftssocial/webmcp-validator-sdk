@@ -63,8 +63,8 @@ program
   .option('--category <category>', 'Filter lint findings by category')
   .option('--rules <ids>', 'Comma-separated list of rule IDs to evaluate')
   .option('--skip-rules <ids>', 'Comma-separated list of rule IDs to skip')
-  .option('-o, --output <file>', 'Save output report to file (json, md, or html)')
-  .option('--format <type>', 'Output format: pretty, json, markdown, html', 'pretty')
+  .option('-o, --output <file>', 'Save output report to file (json, md, html, sarif, or xml)')
+  .option('--format <type>', 'Output format: pretty, json, markdown, html, sarif, junit', 'pretty')
   .option('--fail-under <score>', 'Exit with code 1 if score is below this threshold')
   .action(async (url: string, options: any) => {
     const timeoutMs = parseInt(options.timeout, 10) || 15000;
@@ -157,6 +157,42 @@ program
           process.exit(1);
         }
         return;
+      }
+
+      if (options.format === 'sarif') {
+        if (readinessReport) {
+          console.log(generateReport(readinessReport, 'sarif'));
+        }
+        if (
+          failUnderThreshold !== undefined &&
+          readinessReport &&
+          readinessReport.overallScore < failUnderThreshold
+        ) {
+          process.exit(1);
+        }
+        return;
+      }
+
+      if (options.format === 'junit' || options.format === 'xml') {
+        if (readinessReport) {
+          console.log(generateReport(readinessReport, 'junit'));
+        }
+        if (
+          failUnderThreshold !== undefined &&
+          readinessReport &&
+          readinessReport.overallScore < failUnderThreshold
+        ) {
+          process.exit(1);
+        }
+        return;
+      }
+
+      // If running inside GitHub Actions CI, automatically export Markdown summary to GITHUB_STEP_SUMMARY
+      if (process.env.GITHUB_STEP_SUMMARY && readinessReport) {
+        try {
+          const stepSummaryMarkdown = generateReport(readinessReport, 'markdown');
+          await fs.appendFile(process.env.GITHUB_STEP_SUMMARY, stepSummaryMarkdown + '\n', 'utf8');
+        } catch {}
       }
 
       console.log('\n' + chalk.bold.underline('WebMCP Discovery Results:'));
