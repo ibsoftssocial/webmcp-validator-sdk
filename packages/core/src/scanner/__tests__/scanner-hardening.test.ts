@@ -113,8 +113,8 @@ describe('Scanner Hardening & Network Edge Cases (Day 5)', () => {
     expect(result.redirectChain).toBeDefined();
     expect(result.redirectChain?.length).toBeGreaterThanOrEqual(1);
     expect(result.redirectChain?.[0]).toContain('/redirect');
-    // Tools from the redirected destination /perfect should be discovered (3 imperative + 1 manifest)
-    expect(result.tools.length).toBe(4);
+    // Tools from the redirected destination /perfect should be discovered (3 imperative + 1 declarative + 1 manifest)
+    expect(result.tools.length).toBe(5);
     expect(result.tools.some((t) => t.name === 'search_catalog')).toBe(true);
   });
 

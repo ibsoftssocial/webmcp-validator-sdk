@@ -4,6 +4,13 @@ export interface PageEvaluationData {
   hasNavigatorModelContext: boolean;
   hasDocumentModelContext: boolean;
   hasOriginTrial: boolean;
+  hasHtmlForms: boolean;
+  hasToolNameAttribute: boolean;
+  hasToolDescriptionAttribute: boolean;
+  hasToolActionAttribute: boolean;
+  hasChromeBuiltInAI: boolean;
+  hasAgentInvokedOrHumanInLoop: boolean;
+  metaRobotsBlocking: boolean;
   rawTools: any[];
   declarative: {
     webmcpVersion?: string;
@@ -251,11 +258,60 @@ export function evaluatePageWebMCP(): PageEvaluationData {
   const isBridgeInjected = !!win.__webmcp_bridge_injected;
   const siteProvidedNativeContext = (hasNativeNav || hasNativeDoc) && !isBridgeInjected;
   const hasImperativeModelContext = siteActivelyRegistered || siteProvidedNativeContext || hasOriginTrial;
+  const hasHtmlForms = !!(doc && doc.querySelectorAll('form').length > 0);
+  const hasToolNameAttribute = !!(doc && doc.querySelector('[toolname], [data-tool-name]'));
+  const hasToolDescriptionAttribute = !!(doc && doc.querySelector('[tooldescription], [data-tool-description]'));
+  const hasToolActionAttribute = !!(doc && doc.querySelector('[toolaction], [data-tool-action], form[action]'));
+
+  let hasChromeBuiltInAI = false;
+  try {
+    const hasAIObject = !!(
+      win.ai &&
+      (win.ai.languageModel || win.ai.assistant || win.ai.summarizer || win.ai.writer || win.ai.rewriter || win.ai.translator || typeof win.ai === 'object')
+    );
+    let hasScriptMention = false;
+    try {
+      const scripts = doc ? Array.from(doc.querySelectorAll('script')).map((s: any) => s.textContent || '').join(' ') : '';
+      hasScriptMention = /(?:window\.)?ai\.(?:languageModel|assistant|summarizer|writer|rewriter|translator)|LanguageModel\.(?:create|capabilities)|prompt-api/i.test(scripts);
+    } catch {}
+
+    hasChromeBuiltInAI = hasAIObject || hasScriptMention;
+  } catch {}
+
+  let metaRobotsBlocking = false;
+  try {
+    const metaRobots = doc?.querySelector('meta[name="robots" i], meta[name="googlebot" i]');
+    if (metaRobots) {
+      const content = (metaRobots.getAttribute('content') || '').toLowerCase();
+      if (content.includes('noindex') || content.includes('noai') || content.includes('none')) {
+        metaRobotsBlocking = true;
+      }
+    }
+  } catch {}
+
+  let hasAgentInvokedOrHumanInLoop = false;
+  try {
+    const hasConfirmationHint = sanitizedTools.some((t: any) => t?.annotations?.confirmationHint === true) || declarativeTools.some((t: any) => t?.annotations?.confirmationHint === true);
+    const hasAgentInvokedAttr = !!(doc?.querySelector('[agentinvoked], [data-agent-invoked], [human-in-the-loop], [data-human-in-the-loop]'));
+    let hasScriptMention = false;
+    try {
+      const scripts = doc ? Array.from(doc.querySelectorAll('script')).map((s: any) => s.textContent || '').join(' ') : '';
+      hasScriptMention = /agentinvoked|humaninloop|human-in-loop|confirmationhint/i.test(scripts);
+    } catch {}
+    hasAgentInvokedOrHumanInLoop = hasConfirmationHint || hasAgentInvokedAttr || hasScriptMention || !!win.__webmcp_agent_invoked;
+  } catch {}
 
   return {
     hasNavigatorModelContext: hasImperativeModelContext,
-    hasDocumentModelContext: hasNativeDoc,
+    hasDocumentModelContext: hasNativeDoc && !isBridgeInjected,
     hasOriginTrial,
+    hasHtmlForms,
+    hasToolNameAttribute,
+    hasToolDescriptionAttribute,
+    hasToolActionAttribute,
+    hasChromeBuiltInAI,
+    hasAgentInvokedOrHumanInLoop,
+    metaRobotsBlocking,
     rawTools: siteActivelyRegistered ? sanitizedTools : [],
     declarative: {
       webmcpVersion,

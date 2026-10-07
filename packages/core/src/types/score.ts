@@ -5,11 +5,23 @@ import { DiscoveredToolSchema } from './scanner.js';
 export const GradeRatingSchema = z.enum(['A', 'B', 'C', 'D', 'F']);
 export type GradeRating = z.infer<typeof GradeRatingSchema>;
 
+export const ChecklistItemSchema = z.object({
+  name: z.string(),
+  passed: z.boolean(),
+  points: z.number(),
+  maxPoints: z.number(),
+  details: z.string().optional(),
+});
+
+export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
+
 export const CategoryScoreSchema = z.object({
   category: FindingCategorySchema,
+  title: z.string().optional(),
   score: z.number().min(0).max(100),
   weight: z.number().min(0).max(100),
   weightedScore: z.number().min(0).max(100),
+  checklist: z.array(ChecklistItemSchema).optional(),
   findingsCount: z.object({
     errors: z.number(),
     warnings: z.number(),

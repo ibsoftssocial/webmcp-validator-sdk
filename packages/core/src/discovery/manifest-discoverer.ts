@@ -57,11 +57,34 @@ export async function discoverManifest(options: ManifestDiscovererOptions): Prom
       candidateUrls.push(wellKnown);
     }
 
+    const webmcpPlain = new URL('/.well-known/webmcp', origin).href;
+    if (!candidateUrls.includes(webmcpPlain)) {
+      candidateUrls.push(webmcpPlain);
+    }
+
+    const webmcpJson = new URL('/.well-known/webmcp.json', origin).href;
+    if (!candidateUrls.includes(webmcpJson)) {
+      candidateUrls.push(webmcpJson);
+    }
+
     const mcpManifest = new URL('/mcp/manifest.json', origin).href;
     if (!candidateUrls.includes(mcpManifest)) {
       candidateUrls.push(mcpManifest);
     }
   }
+
+  let hasWellKnownWebmcp = false;
+  if (origin && origin.startsWith('http')) {
+    try {
+      const wkProbe = await fetchFn(new URL('/.well-known/webmcp', origin).href, {
+        signal: AbortSignal.timeout(Math.min(timeoutMs, 2000)),
+      });
+      if (wkProbe.ok) {
+        hasWellKnownWebmcp = true;
+      }
+    } catch {}
+  }
+  let isValidJson = false;
 
   // Probe candidates sequentially or stop on first valid manifest
   for (const candidateUrl of candidateUrls) {
@@ -78,6 +101,10 @@ export async function discoverManifest(options: ManifestDiscovererOptions): Prom
         continue;
       }
 
+      if (candidateUrl.includes('/.well-known/webmcp')) {
+        hasWellKnownWebmcp = true;
+      }
+
       const rawText = await response.text();
       const trimmed = rawText.trim();
 
@@ -89,6 +116,7 @@ export async function discoverManifest(options: ManifestDiscovererOptions): Prom
       let parsedData: any;
       try {
         parsedData = JSON.parse(trimmed);
+        isValidJson = true;
       } catch (jsonErr) {
         errors.push(`Manifest at ${candidateUrl} contained invalid JSON: ${(jsonErr as Error).message}`);
         continue;
@@ -121,6 +149,8 @@ export async function discoverManifest(options: ManifestDiscovererOptions): Prom
         hasManifest: true,
         manifestUrl: candidateUrl,
         manifestData: parsedData,
+        hasWellKnownWebmcp: hasWellKnownWebmcp || candidateUrl.includes('/.well-known/webmcp'),
+        isValidJson: true,
         tools,
         errors,
       };
@@ -135,6 +165,8 @@ export async function discoverManifest(options: ManifestDiscovererOptions): Prom
 
   return {
     hasManifest: false,
+    hasWellKnownWebmcp,
+    isValidJson,
     tools: [],
     errors,
   };

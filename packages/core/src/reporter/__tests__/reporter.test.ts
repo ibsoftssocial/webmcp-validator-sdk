@@ -151,7 +151,7 @@ describe('WebMCP Reporter Module (Day 8)', () => {
       expect(parsed.grade).toBe(report.grade);
       expect(parsed.passed).toBe(report.passed);
       expect(parsed.toolCount).toBe(2);
-      expect(parsed.categories['implementation']).toBeDefined();
+      expect(parsed.categories['imperative']).toBeDefined();
     });
 
     it('respects custom jsonIndent option', () => {
@@ -180,9 +180,9 @@ describe('WebMCP Reporter Module (Day 8)', () => {
 
       // Category Breakdown Table
       expect(md).toContain('## Category Breakdown');
-      expect(md).toContain('| **Implementation** |');
-      expect(md).toContain('| **Tool Quality** |');
-      expect(md).toContain('| **Security** |');
+      expect(md).toContain('| **Infrastructure & Connectivity** |');
+      expect(md).toContain('| **Agent Access & Permissions** |');
+      expect(md).toContain('| **Imperative WebMCP JavaScript API** |');
 
       // Discovered Tools Table
       expect(md).toContain('## Discovered Tools');
@@ -269,10 +269,9 @@ describe('WebMCP Reporter Module (Day 8)', () => {
       expect(html).toContain(`>${report.overallScore}</span>`);
       expect(html).toContain(`Grade ${report.grade}`);
 
-      // Category breakdown progress bars
       expect(html).toContain('Category Breakdown');
-      expect(html).toContain('Implementation');
-      expect(html).toContain('Tool Quality');
+      expect(html).toContain('Infrastructure &amp; Connectivity');
+      expect(html).toContain('Imperative WebMCP JavaScript API');
       expect(html).toContain('cat-progress-fill');
 
       // Discovered tools section
@@ -353,8 +352,8 @@ describe('WebMCP Reporter Module (Day 8)', () => {
       expect(term).toContain(`Overall Score:           ${report.overallScore}/100`);
       expect(term).toContain(`[Grade ${report.grade}]`);
       expect(term).toContain('Category Breakdown:');
-      expect(term).toContain('Implementation');
-      expect(term).toContain('Tool Quality');
+      expect(term).toContain('Infrastructure & Connectivity');
+      expect(term).toContain('Imperative WebMCP JavaScript API');
       expect(term).toContain('Discovered Tools (2):');
       expect(term).toContain('search_products');
       expect(term).toContain('checkout_cart');

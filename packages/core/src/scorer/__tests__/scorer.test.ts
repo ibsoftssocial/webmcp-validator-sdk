@@ -17,16 +17,51 @@ function createMockDetection(overrides: Partial<WebMCPDetectionResult> = {}): We
     url: 'https://example.com',
     scannedAt: Date.now(),
     durationMs: 120,
+    responseTimeMs: 80,
+    httpStatus: 200,
     hasNavigatorModelContext: true,
+    hasDocumentModelContext: true,
     imperativeDetected: true,
-    declarativeDetected: false,
+    declarativeDetected: true,
     hasLlmsTxt: true,
+    hasHtmlForms: true,
+    hasToolNameAttribute: true,
+    hasToolDescriptionAttribute: true,
+    hasToolActionAttribute: true,
+    hasChromeBuiltInAI: true,
+    hasAgentInvokedOrHumanInLoop: true,
+    metaRobotsBlocking: false,
+    xRobotsTagBlocking: false,
+    agentDirectives: {
+      hasLlmsTxt: true,
+      hasLlmsFullTxt: false,
+      hasRobotsTxt: true,
+      aiCrawlersAllowed: true,
+      hasSitemapXml: true,
+      errors: [],
+    },
+    manifestDetails: {
+      hasManifest: true,
+      hasWellKnownWebmcp: true,
+      isValidJson: true,
+      manifestData: { tools: [] },
+      tools: [],
+      errors: [],
+    },
     tools: [
       {
         name: 'search_catalog',
         description: 'Search catalog by query',
         inputSchema: { type: 'object' },
         source: 'imperative',
+        annotations: { confirmationHint: true },
+        discoveredAt: Date.now(),
+      },
+      {
+        name: 'declarative_search',
+        description: 'Declarative search tool',
+        inputSchema: { type: 'object' },
+        source: 'declarative',
         discoveredAt: Date.now(),
       },
     ],
@@ -169,101 +204,84 @@ describe('WebMCP Scorer Engine (Day 7)', () => {
       }
     });
 
-    it('computes weighted reductions across multiple categories', () => {
-      const detection = createMockDetection();
-      const findings: RuleFinding[] = [
-        // tool-quality: TQ-001 (10 pts) -> score 90 (weighted 90 * 0.25 = 22.5)
-        {
-          ruleId: 'TQ-001',
-          title: 'Tool Name Format',
-          message: 'Format error',
-          severity: 'error',
-          category: 'tool-quality',
+    it('computes checklist point reductions across categories', () => {
+      // Perfect score is 100.
+      // Dropping Chrome Built-in AI (-10 pts) and Manifest (-10 pts) gives 80
+      const detection = createMockDetection({
+        hasChromeBuiltInAI: false,
+        manifestDetails: {
+          hasManifest: false,
+          hasWellKnownWebmcp: false,
+          isValidJson: false,
+          tools: [],
+          errors: [],
         },
-        // discoverability: DISC-001 (4 pts) -> score 96 (weighted 96 * 0.10 = 9.6)
-        {
-          ruleId: 'DISC-001',
-          title: 'Manifest Link Present',
-          message: 'No manifest link',
-          severity: 'info',
-          category: 'discoverability',
-        },
-      ];
-      // Other categories (implementation: 30, best-practices: 20, security: 15) remain 100.
-      // Expected total: 30 + 22.5 + 20 + 15 + 9.6 = 97.1 -> rounded to 97
+      });
 
-      const lint = createMockLintResult(findings);
+      const lint = createMockLintResult([]);
       const report = calculateReadinessScore(detection, lint);
 
-      expect(report.overallScore).toBe(97);
-      expect(report.grade).toBe('A');
+      expect(report.overallScore).toBe(80);
+      expect(report.grade).toBe('B');
       expect(report.passed).toBe(true);
-      expect(report.categories['tool-quality']!.score).toBe(90);
-      expect(report.categories['discoverability']!.score).toBe(96);
+      expect(report.categories['chrome-ai']!.score).toBe(0);
+      expect(report.categories['discovery-manifest']!.score).toBe(0);
     });
 
     it('marks report as failed when score is below passingScore', () => {
-      const detection = createMockDetection();
-      // Implementation missing: IMP-001 (25 pts) -> implementation score 75 (weighted 22.5)
-      // Tool quality: 3 errors (30 pts) -> score 70 (weighted 17.5)
-      // Best practices: 3 errors (30 pts) -> score 70 (weighted 14.0)
-      // Total: 22.5 + 17.5 + 14.0 + 15 + 10 = 79
-      const findings: RuleFinding[] = [
-        { ruleId: 'IMP-001', title: 'Presence', message: 'Err', severity: 'error', category: 'implementation' },
-        { ruleId: 'TQ-001', title: 'Name', message: 'Err', severity: 'error', category: 'tool-quality' },
-        { ruleId: 'TQ-002', title: 'Desc', message: 'Err', severity: 'error', category: 'tool-quality' },
-        { ruleId: 'TQ-001', title: 'Name 2', message: 'Err', severity: 'error', category: 'tool-quality' },
-        { ruleId: 'BP-001', title: 'Schema 1', message: 'Err', severity: 'error', category: 'best-practices' },
-        { ruleId: 'BP-001', title: 'Schema 2', message: 'Err', severity: 'error', category: 'best-practices' },
-        { ruleId: 'BP-001', title: 'Schema 3', message: 'Err', severity: 'error', category: 'best-practices' },
-      ];
+      // Dropping Declarative (-28 pts), Imperative (-12 pts), and Chrome AI (-10 pts) gives 50/100
+      const detection = createMockDetection({
+        hasHtmlForms: false,
+        hasToolNameAttribute: false,
+        hasToolDescriptionAttribute: false,
+        hasToolActionAttribute: false,
+        hasNavigatorModelContext: false,
+        hasDocumentModelContext: false,
+        imperativeDetected: false,
+        hasAgentInvokedOrHumanInLoop: false,
+        hasChromeBuiltInAI: false,
+        tools: [],
+      });
 
-      const lint = createMockLintResult(findings);
+      const lint = createMockLintResult([]);
       const report = calculateReadinessScore(detection, lint);
 
-      expect(report.overallScore).toBe(57);
+      expect(report.overallScore).toBe(50);
       expect(report.grade).toBe('F');
       expect(report.passed).toBe(false); // default threshold is 80
     });
 
     it('respects custom passing score threshold', () => {
-      const detection = createMockDetection();
-      const findings: RuleFinding[] = [
-        { ruleId: 'TQ-001', title: 'Name', message: 'Err', severity: 'error', category: 'tool-quality' },
-      ]; // Score = 97.5 -> 98
-
-      const lint = createMockLintResult(findings);
-      const report = calculateReadinessScore(detection, lint, {
-        passingScore: 99,
+      const detection = createMockDetection({
+        hasChromeBuiltInAI: false, // 90 / 100
       });
 
-      expect(report.overallScore).toBe(98);
-      expect(report.passed).toBe(false); // 98 < 99
+      const lint = createMockLintResult([]);
+      const report = calculateReadinessScore(detection, lint, {
+        passingScore: 95,
+      });
+
+      expect(report.overallScore).toBe(90);
+      expect(report.passed).toBe(false); // 90 < 95
     });
 
     it('respects custom category weights', () => {
       const detection = createMockDetection();
-      const findings: RuleFinding[] = [
-        { ruleId: 'TQ-001', title: 'Name', message: 'Err', severity: 'error', category: 'tool-quality' },
-      ]; // tool-quality score: 90
-
-      const lint = createMockLintResult(findings);
+      const lint = createMockLintResult([]);
       const report = calculateReadinessScore(detection, lint, {
         categoryWeights: {
-          'tool-quality': 60,
-          'implementation': 10,
-          'best-practices': 10,
-          'security': 10,
-          'discoverability': 10,
+          'declarative': 40,
+          'infrastructure': 10,
+          'agent-access': 10,
+          'imperative': 20,
+          'discovery-manifest': 10,
+          'chrome-ai': 10,
         },
       });
 
-      // tool-quality: 90 * 0.60 = 54
-      // others: 10 + 10 + 10 + 10 = 40
-      // total = 94
-      expect(report.categories['tool-quality']!.weight).toBe(60);
-      expect(report.categories['tool-quality']!.weightedScore).toBe(54);
-      expect(report.overallScore).toBe(94);
+      expect(report.categories['declarative']!.weight).toBe(40);
+      expect(report.categories['declarative']!.weightedScore).toBe(40);
+      expect(report.overallScore).toBe(100);
     });
   });
 
@@ -296,7 +314,7 @@ describe('WebMCP Scorer Engine (Day 7)', () => {
       expect(report.toolCount).toBeGreaterThanOrEqual(3);
     });
 
-    it('scores /malformed with errors, warnings, and reduced tool quality', async () => {
+    it('scores /malformed with errors and reduced score', async () => {
       const { scanUrl } = await import('../../scanner/playwright-scanner.js');
       const { lintWebMCP } = await import('../../linter/linter.js');
 
@@ -307,12 +325,10 @@ describe('WebMCP Scorer Engine (Day 7)', () => {
       expect(report.url).toBe(server.getUrl('/malformed'));
       expect(report.overallScore).toBeLessThan(100);
       expect(report.summary.errorCount).toBeGreaterThan(0);
-      expect(report.summary.warningCount).toBeGreaterThan(0);
-      expect(report.categories['tool-quality']!.score).toBeLessThanOrEqual(80);
-      expect(report.categories['best-practices']!.score).toBeLessThanOrEqual(90);
+      expect(report.categories['declarative']!.score).toBeLessThanOrEqual(80);
     });
 
-    it('scores /legacy with a failing score (< 20, Grade F) due to absence of WebMCP', async () => {
+    it('scores /legacy with a failing score (< 70) due to absence of WebMCP', async () => {
       const { scanUrl } = await import('../../scanner/playwright-scanner.js');
       const { lintWebMCP } = await import('../../linter/linter.js');
 
@@ -321,13 +337,10 @@ describe('WebMCP Scorer Engine (Day 7)', () => {
       const report = calculateReadinessScore(detection, lint);
 
       expect(report.url).toBe(server.getUrl('/legacy'));
-      expect(report.overallScore).toBeLessThan(20);
+      expect(report.overallScore).toBeLessThan(70);
       expect(report.passed).toBe(false);
-      expect(report.grade).toBe('F');
-      expect(report.categories['implementation']!.score).toBe(0);
-      expect(report.categories['tool-quality']!.score).toBe(0);
-      expect(report.categories['best-practices']!.score).toBe(0);
-      expect(report.categories['security']!.score).toBe(0);
+      expect(report.categories['imperative']!.score).toBe(0);
+      expect(report.categories['chrome-ai']!.score).toBe(0);
     });
   });
 });

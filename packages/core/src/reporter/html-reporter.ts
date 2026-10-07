@@ -634,7 +634,7 @@ export function renderHtmlReport(
 
     <!-- Category Breakdown Card -->
     <div class="card" style="margin-bottom: 28px;">
-      <h2 class="section-title"><span>📊</span> Category Breakdown</h2>
+      <h2 class="section-title"><span>📊</span> Category Breakdown & Readiness Checklist</h2>
       <div class="category-list">
         ${Object.entries(report.categories)
           .map(([key, cat]) => {
@@ -644,11 +644,33 @@ export function renderHtmlReport(
                 : cat.score >= 70
                 ? 'var(--warn)'
                 : 'var(--error)';
+            const checklistHtml =
+              cat.checklist && cat.checklist.length > 0
+                ? `<div class="cat-checklist" style="margin-top: 12px; display: flex; flex-direction: column; gap: 6px;">
+                    ${cat.checklist
+                      .map((item) => {
+                        const icon = item.passed ? '✔' : '✖';
+                        const color = item.passed ? 'var(--success)' : 'var(--error)';
+                        const bg = item.passed ? 'var(--success-bg)' : 'var(--error-bg)';
+                        return `
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.82rem; padding: 4px 10px; background: ${bg}; border-radius: 6px;">
+                          <div style="display: flex; align-items: center; gap: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            <span style="color: ${color}; font-weight: bold;">${icon}</span>
+                            <span style="color: var(--text-main); font-weight: 500;">${escapeHtml(item.name)}</span>
+                            ${item.details ? `<span style="color: var(--text-dim); font-size: 0.75rem;">(${escapeHtml(item.details)})</span>` : ''}
+                          </div>
+                          <span style="color: ${color}; font-weight: 600; font-size: 0.78rem; flex-shrink: 0; margin-left: 8px;">${item.points} / ${item.maxPoints} pts</span>
+                        </div>`;
+                      })
+                      .join('')}
+                   </div>`
+                : '';
+
             return `
-          <div class="cat-item">
+          <div class="cat-item" style="padding-bottom: 12px;">
             <div class="cat-header">
               <div class="cat-title">
-                ${escapeHtml(formatCategoryName(key))}
+                ${escapeHtml(cat.title || formatCategoryName(key))}
                 <span class="cat-weight-pill">${cat.weight}% Weight</span>
               </div>
               <div class="cat-score-val">
@@ -658,6 +680,7 @@ export function renderHtmlReport(
             <div class="cat-progress-bg">
               <div class="cat-progress-fill" style="width: ${cat.score}%; background: ${barColor};"></div>
             </div>
+            ${checklistHtml}
           </div>`;
           })
           .join('')}

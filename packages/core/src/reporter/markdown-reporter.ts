@@ -50,10 +50,36 @@ export function renderMarkdownReport(
 
   for (const [catName, cat] of Object.entries(report.categories)) {
     lines.push(
-      `| **${formatCategoryName(catName)}** | ${cat.weight}% | ${cat.score} / 100 | ${cat.weightedScore.toFixed(1)} / ${cat.weight} | ${cat.findingsCount.errors} | ${cat.findingsCount.warnings} | ${cat.findingsCount.info} |`
+      `| **${cat.title || formatCategoryName(catName)}** | ${cat.weight}% | ${cat.score} / 100 | ${cat.weightedScore.toFixed(1)} / ${cat.weight} | ${cat.findingsCount.errors} | ${cat.findingsCount.warnings} | ${cat.findingsCount.info} |`
     );
   }
   lines.push('');
+
+  // AI Readiness Checklist Breakdown Table
+  const hasAnyChecklist = Object.values(report.categories).some(
+    (c) => c.checklist && c.checklist.length > 0
+  );
+  if (hasAnyChecklist) {
+    lines.push('## AI Readiness Checklist Breakdown');
+    lines.push('');
+    lines.push('| Checklist Item | Status | Points | Details |');
+    lines.push('| :--- | :---: | :---: | :--- |');
+
+    for (const [catName, cat] of Object.entries(report.categories)) {
+      if (cat.checklist && cat.checklist.length > 0) {
+        lines.push(
+          `| **${cat.title || formatCategoryName(catName)}** | — | **${cat.weightedScore.toFixed(0)} / ${cat.weight}** | — |`
+        );
+        for (const item of cat.checklist) {
+          const statusBadge = item.passed ? '✅ Passed' : '❌ Failed';
+          const points = `${item.points} / ${item.maxPoints}`;
+          const details = item.details || '—';
+          lines.push(`| &nbsp;&nbsp;↳ ${item.name} | ${statusBadge} | ${points} | ${details} |`);
+        }
+      }
+    }
+    lines.push('');
+  }
 
   // Discovered Tools
   lines.push('## Discovered Tools');

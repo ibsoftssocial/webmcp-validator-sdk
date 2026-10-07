@@ -25,6 +25,12 @@
     <h2>Agent Ready Shopping Experience</h2>
     <p>This page exposes 3 high-quality WebMCP tools via <code>window.navigator.modelContext</code>.</p>
 
+    <!-- Declarative WebMCP Form Markup -->
+    <form toolname="quick_search" tooldescription="Quick search catalog by keywords" toolaction="/search" method="GET" style="margin-bottom: 24px;">
+      <input type="text" name="query" placeholder="Search keywords..." required>
+      <button type="submit">Search</button>
+    </form>
+
     <div class="tool-card">
       <h3>1. <code>search_catalog</code></h3>
       <p>Search products by keyword and category with full descriptions and pagination limits.</p>
@@ -42,6 +48,12 @@
   </main>
 
   <script>
+    // Chrome Built-in AI (Prompt API)
+    window.ai = {
+      languageModel: {
+        capabilities: async () => ({ available: 'readily' }),
+      }
+    };
     // Ensure navigator.modelContext exists (Polyfill / Native fallback for test environments)
     if (!navigator.modelContext) {
       const registeredTools = new Map();

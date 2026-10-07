@@ -171,9 +171,16 @@ export class MockServer {
           await this.serveFile(res, 'llms.txt', 'text/plain; charset=utf-8');
           break;
 
+        case '/.well-known/webmcp':
+        case '/.well-known/webmcp.json':
         case '/.well-known/mcp.json':
         case '/mcp/manifest.json':
           await this.serveFile(res, 'mcp-manifest.json', 'application/json; charset=utf-8');
+          break;
+
+        case '/sitemap.xml':
+          res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
+          res.end(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${this.url}/</loc></url></urlset>`);
           break;
 
         case '/robots.txt':

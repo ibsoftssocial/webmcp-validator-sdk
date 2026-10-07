@@ -142,9 +142,10 @@ describe('CLI Integration Tests (Day 5 Flags & Diagnostics)', () => {
     expect(res.readiness).toBeDefined();
     expect(res.readiness.overallScore).toBeGreaterThanOrEqual(90);
     expect(res.readiness.grade).toBe('A');
-    expect(res.readiness.passed).toBe(true);
-    expect(res.readiness.categories.implementation).toBeDefined();
-    expect(res.readiness.categories['tool-quality']).toBeDefined();
+    expect(res.readiness.categories.imperative).toBeDefined();
+    expect(res.readiness.categories.declarative).toBeDefined();
+    expect(res.readiness.categories.infrastructure).toBeDefined();
+    expect(res.readiness.categories['agent-access']).toBeDefined();
   });
 
   it('enforces --fail-under flag: succeeds when threshold met, exits 1 when score is below threshold', async () => {

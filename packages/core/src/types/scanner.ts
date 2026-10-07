@@ -89,6 +89,10 @@ export interface ManifestDiscoveryResult {
   manifestUrl?: string;
   /** Parsed manifest object */
   manifestData?: any;
+  /** Whether the manifest was found at /.well-known/webmcp or /.well-known/webmcp.json */
+  hasWellKnownWebmcp?: boolean;
+  /** Whether the manifest content was parsed as valid JSON */
+  isValidJson?: boolean;
   /** Tools extracted from the manifest */
   tools: DiscoveredTool[];
   /** Non-fatal errors encountered during manifest probing/parsing */
@@ -112,6 +116,10 @@ export interface AgentDirectivesResult {
   robotsTxtContent?: string;
   /** Whether common AI crawler user-agents are permitted */
   aiCrawlersAllowed?: boolean;
+  /** Whether /sitemap.xml or sitemap index is present */
+  hasSitemapXml?: boolean;
+  /** Resolved sitemap URL */
+  sitemapUrl?: string;
   /** Non-fatal errors encountered during agent directives probing */
   errors: string[];
 }
@@ -123,8 +131,12 @@ export interface WebMCPDetectionResult {
   scannedAt: number;
   /** Total scan duration in milliseconds */
   durationMs: number;
+  /** Initial server response time in milliseconds */
+  responseTimeMs?: number;
   /** Whether window.navigator.modelContext exists */
   hasNavigatorModelContext: boolean;
+  /** Whether window.document.modelContext exists */
+  hasDocumentModelContext?: boolean;
   /** Whether imperative tool registrations were detected */
   imperativeDetected: boolean;
   /** Whether declarative WebMCP markup was detected */
@@ -147,6 +159,22 @@ export interface WebMCPDetectionResult {
   finalUrl?: string;
   /** Redirect URLs traversed during navigation */
   redirectChain?: string[];
+  /** Whether HTML <form> elements exist on the page */
+  hasHtmlForms?: boolean;
+  /** Whether toolname / data-tool-name attribute is declared on markup */
+  hasToolNameAttribute?: boolean;
+  /** Whether tooldescription / data-tool-description attribute is declared */
+  hasToolDescriptionAttribute?: boolean;
+  /** Whether toolaction / data-tool-action / action attribute is declared */
+  hasToolActionAttribute?: boolean;
+  /** Whether Chrome Built-in AI (Prompt API / Gemini Nano) was detected */
+  hasChromeBuiltInAI?: boolean;
+  /** Whether agentInvoked handler or human-in-the-loop confirmation is supported */
+  hasAgentInvokedOrHumanInLoop?: boolean;
+  /** Whether Meta Robots tag contains restrictive noai / noindex directives */
+  metaRobotsBlocking?: boolean;
+  /** Whether X-Robots-Tag HTTP header contains restrictive noai / noindex directives */
+  xRobotsTagBlocking?: boolean;
   /** Errors encountered during scanning */
   scanErrors: string[];
 }

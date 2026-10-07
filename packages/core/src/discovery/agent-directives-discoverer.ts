@@ -18,11 +18,12 @@ const MAX_DIRECTIVE_BYTES = 128 * 1024; // 128KB max text size
 /**
  * Checks robots.txt content to determine if AI agent bots are generally permitted
  */
-export function analyzeRobotsTxt(robotsTxt: string): { aiCrawlersAllowed: boolean } {
+export function analyzeRobotsTxt(robotsTxt: string): { aiCrawlersAllowed: boolean; sitemapUrl?: string } {
   const lines = robotsTxt.split(/\r?\n/);
   const aiBots = ['gptbot', 'claudebot', 'google-extended', 'anthropic-ai', 'perplexitybot'];
   let currentAgents: string[] = [];
   let isAiBlocked = false;
+  let sitemapUrl: string | undefined;
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
@@ -47,16 +48,22 @@ export function analyzeRobotsTxt(robotsTxt: string): { aiCrawlersAllowed: boolea
       if (path === '/' || path === '/*') {
         isAiBlocked = false;
       }
+    } else if (lower.startsWith('sitemap:')) {
+      const candidateSitemap = line.slice(8).trim();
+      if (candidateSitemap && !sitemapUrl) {
+        sitemapUrl = candidateSitemap;
+      }
     }
   }
 
-  return { aiCrawlersAllowed: !isAiBlocked };
+  return { aiCrawlersAllowed: !isAiBlocked, sitemapUrl };
 }
 
 /**
  * Probes and extracts AI agent directives:
  * - /llms.txt and /llms-full.txt
  * - /robots.txt AI crawler policies
+ * - /sitemap.xml Presence
  */
 export async function discoverAgentDirectives(
   options: AgentDirectivesDiscovererOptions
@@ -88,6 +95,8 @@ export async function discoverAgentDirectives(
   let hasRobotsTxt = false;
   let robotsTxtContent: string | undefined;
   let aiCrawlersAllowed: boolean | undefined;
+  let hasSitemapXml = false;
+  let sitemapUrl: string | undefined;
 
   // 1. Probe candidate llms.txt URLs
   const llmsCandidates: string[] = [];
@@ -174,6 +183,37 @@ export async function discoverAgentDirectives(
           robotsTxtContent = trimmed.slice(0, MAX_DIRECTIVE_BYTES);
           const analysis = analyzeRobotsTxt(trimmed);
           aiCrawlersAllowed = analysis.aiCrawlersAllowed;
+          if (analysis.sitemapUrl) {
+            hasSitemapXml = true;
+            sitemapUrl = analysis.sitemapUrl;
+          }
+        }
+      }
+    } catch {}
+  }
+
+  // 4. Probe sitemap.xml fallback
+  if (!hasSitemapXml && origin && origin.startsWith('http')) {
+    const candidateSitemap = new URL('/sitemap.xml', origin).href;
+    try {
+      const res = await fetchFn(candidateSitemap, {
+        headers: {
+          'Accept': 'application/xml, text/xml, */*',
+          'User-Agent': 'WebMCP-Validator/0.1.0 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
+        },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+
+      if (res.ok) {
+        const text = await res.text();
+        const trimmed = text.trim();
+        if (
+          !trimmed.startsWith('<!DOCTYPE html') &&
+          !trimmed.startsWith('<html') &&
+          (trimmed.includes('<urlset') || trimmed.includes('<sitemapindex') || trimmed.includes('<?xml'))
+        ) {
+          hasSitemapXml = true;
+          sitemapUrl = candidateSitemap;
         }
       }
     } catch {}
@@ -188,6 +228,8 @@ export async function discoverAgentDirectives(
     hasRobotsTxt,
     robotsTxtContent,
     aiCrawlersAllowed,
+    hasSitemapXml,
+    sitemapUrl,
     errors,
   };
 }

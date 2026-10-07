@@ -175,14 +175,26 @@ export class PlaywrightScanner {
       }
 
       // Navigate to the target page and track HTTP response & redirects
+      let responseTimeMs: number | undefined;
+      let xRobotsTagBlocking = false;
+      const navStart = Date.now();
       const response = await page.goto(options.url, {
         waitUntil: 'domcontentloaded',
         timeout: timeoutMs,
       });
 
       if (response) {
+        responseTimeMs = Date.now() - navStart;
         httpStatus = response.status();
         finalUrl = page.url();
+
+        try {
+          const headers = response.headers();
+          const xRobots = (headers['x-robots-tag'] || '').toLowerCase();
+          if (xRobots.includes('noindex') || xRobots.includes('noai') || xRobots.includes('none')) {
+            xRobotsTagBlocking = true;
+          }
+        } catch {}
 
         let req: any = response.request();
         const chain: string[] = [];
@@ -264,7 +276,9 @@ export class PlaywrightScanner {
         url: options.url,
         scannedAt: startTime,
         durationMs: Date.now() - startTime,
+        responseTimeMs,
         hasNavigatorModelContext,
+        hasDocumentModelContext: evalResult?.hasDocumentModelContext,
         imperativeDetected: multiSource.imperativeDetected,
         declarativeDetected: multiSource.declarativeDetected,
         hasLlmsTxt: multiSource.hasLlmsTxt,
@@ -276,6 +290,14 @@ export class PlaywrightScanner {
         httpStatus,
         finalUrl,
         redirectChain,
+        hasHtmlForms: evalResult?.hasHtmlForms,
+        hasToolNameAttribute: evalResult?.hasToolNameAttribute,
+        hasToolDescriptionAttribute: evalResult?.hasToolDescriptionAttribute,
+        hasToolActionAttribute: evalResult?.hasToolActionAttribute,
+        hasChromeBuiltInAI: evalResult?.hasChromeBuiltInAI,
+        hasAgentInvokedOrHumanInLoop: evalResult?.hasAgentInvokedOrHumanInLoop,
+        metaRobotsBlocking: evalResult?.metaRobotsBlocking,
+        xRobotsTagBlocking,
         scanErrors,
       };
     } catch (err: any) {

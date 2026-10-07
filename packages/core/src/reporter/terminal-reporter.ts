@@ -57,21 +57,39 @@ export function renderTerminalReport(
   lines.push(bold('Category Breakdown:'));
   lines.push(
     cyan(
-      `  ${'Category'.padEnd(18)} ${'Weight'.padEnd(8)} ${'Score'.padEnd(10)} ${'Weighted'.padEnd(14)} ${'Findings (E/W/I)'}`
+      `  ${'Category'.padEnd(38)} ${'Weight'.padEnd(8)} ${'Raw Score'.padEnd(12)} ${'Weighted'.padEnd(14)} ${'Findings (E/W/I)'}`
     )
   );
-  lines.push(gray('  ' + '─'.repeat(68)));
+  lines.push(gray('  ' + '─'.repeat(86)));
 
   for (const [catName, cat] of Object.entries(report.categories)) {
-    const label = formatCategoryName(catName).padEnd(18);
+    const label = (cat.title || formatCategoryName(catName)).padEnd(38);
     const weight = `${cat.weight}%`.padEnd(8);
-    const scoreStr = `${cat.score}/100`.padEnd(10);
+    const scoreStr = `${cat.score}/100`.padEnd(12);
     const weighted = `${cat.weightedScore.toFixed(1)} / ${cat.weight}`.padEnd(14);
     const findingsStr = `${cat.findingsCount.errors}E / ${cat.findingsCount.warnings}W / ${cat.findingsCount.info}I`;
 
     lines.push(`  ${label} ${weight} ${scoreStr} ${weighted} ${findingsStr}`);
   }
   lines.push('');
+
+  // Checklist breakdown
+  const hasAnyChecklist = Object.values(report.categories).some((c) => c.checklist && c.checklist.length > 0);
+  if (hasAnyChecklist) {
+    lines.push(bold('AI Readiness Checklist Breakdown:'));
+    for (const [catName, cat] of Object.entries(report.categories)) {
+      if (cat.checklist && cat.checklist.length > 0) {
+        lines.push(`  ${bold(cat.title || formatCategoryName(catName))} (${cat.weightedScore.toFixed(0)}/${cat.weight} pts):`);
+        for (const item of cat.checklist) {
+          const checkMark = item.passed ? green('✔') : red('✖');
+          const pointsBadge = item.passed ? green(`[+${item.points} pts]`) : gray(`[0/${item.maxPoints} pts]`);
+          const detailStr = item.details ? gray(` (${item.details})`) : '';
+          lines.push(`    ${checkMark} ${item.name} ${pointsBadge}${detailStr}`);
+        }
+      }
+    }
+    lines.push('');
+  }
 
   if (report.tools.length > 0) {
     lines.push(bold(`Discovered Tools (${report.tools.length}):`));
