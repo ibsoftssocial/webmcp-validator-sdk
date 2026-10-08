@@ -127,5 +127,37 @@ describe('WebMCPValidator SDK (Programmatic API)', () => {
       expect(content).toContain('# WebMCP Site-Wide Batch Audit Report');
     });
   });
+
+  describe('Day 11 SVG Badge SDK APIs', () => {
+    it('generates SVG readiness badges via SDK', async () => {
+      const report = await WebMCPValidator.audit(server.getUrl('/perfect'));
+      const badgeSvg = WebMCPValidator.generateBadge(report);
+
+      expect(badgeSvg).toContain('<svg');
+      expect(badgeSvg).toContain('WebMCP');
+      expect(badgeSvg).toContain('Grade A');
+    });
+
+    it('saves badge directly to file via SDK', async () => {
+      const report = await WebMCPValidator.audit(server.getUrl('/perfect'));
+      const badgePath = path.join(tempDir, 'badge.svg');
+
+      await WebMCPValidator.saveBadge(report, badgePath);
+
+      const exists = await fs.stat(badgePath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+      const content = await fs.readFile(badgePath, 'utf8');
+      expect(content).toContain('<svg');
+      expect(content).toContain('Grade A');
+    });
+
+    it('generates markdown badge snippets via SDK helper', () => {
+      const md = WebMCPValidator.generateMarkdownBadgeSnippet({
+        badgePathOrUrl: './badge.svg',
+        targetUrl: 'https://example.com/audit.html',
+      });
+      expect(md).toBe('[![WebMCP AI Readiness](./badge.svg)](https://example.com/audit.html)');
+    });
+  });
 });
 

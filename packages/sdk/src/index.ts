@@ -19,6 +19,12 @@ import {
   SitemapParserOptions,
   generateBatchReport,
   saveBatchReportToFile,
+  generateReadinessBadge,
+  saveReadinessBadgeToFile,
+  generateBatchReadinessBadge,
+  saveBatchReadinessBadgeToFile,
+  generateMarkdownBadgeSnippet,
+  BadgeOptions,
 } from '@webmcp-validator/core';
 export * from '@webmcp-validator/core';
 
@@ -131,6 +137,59 @@ export class WebMCPValidator {
     options?: ReporterOptions & { format?: ReportFormat }
   ): Promise<void> {
     return saveBatchReportToFile(result, filePath, options);
+  }
+
+  /**
+   * Generate an embeddable SVG readiness badge
+   */
+  static generateBadge(
+    report: WebMCPReadinessReport,
+    options?: BadgeOptions
+  ): string {
+    return generateReadinessBadge(report, options);
+  }
+
+  /**
+   * Save an SVG readiness badge directly to a file (.svg)
+   */
+  static async saveBadge(
+    report: WebMCPReadinessReport,
+    filePath: string,
+    options?: BadgeOptions
+  ): Promise<void> {
+    return saveReadinessBadgeToFile(report, filePath, options);
+  }
+
+  /**
+   * Generate an embeddable SVG badge for a site-wide batch audit
+   */
+  static generateBatchBadge(
+    result: BatchAuditResult,
+    options?: BadgeOptions
+  ): string {
+    return generateBatchReadinessBadge(result, options);
+  }
+
+  /**
+   * Save a site-wide SVG readiness badge directly to a file (.svg)
+   */
+  static async saveBatchBadge(
+    result: BatchAuditResult,
+    filePath: string,
+    options?: BadgeOptions
+  ): Promise<void> {
+    return saveBatchReadinessBadgeToFile(result, filePath, options);
+  }
+
+  /**
+   * Generate a Markdown snippet for embedding an SVG badge in a README
+   */
+  static generateMarkdownBadgeSnippet(options: {
+    badgePathOrUrl: string;
+    targetUrl?: string;
+    altText?: string;
+  }): string {
+    return generateMarkdownBadgeSnippet(options);
   }
 }
 

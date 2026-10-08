@@ -354,6 +354,28 @@ describe('CLI Integration Tests (Day 5 Flags & Diagnostics)', () => {
       expect(summaryContent).toContain('# WebMCP AI Readiness Audit Report');
       expect(summaryContent).toContain('## Category Breakdown');
     });
+
+    it('outputs valid SVG badge with --format badge', async () => {
+      const url = server.getUrl('/perfect');
+      const { stdout } = await execFileAsync('node', [CLI_PATH, 'scan', url, '--format', 'badge']);
+
+      expect(stdout).toContain('<svg');
+      expect(stdout).toContain('Grade A');
+    });
+
+    it('saves SVG badge to disk when -o file has .svg extension', async () => {
+      const url = server.getUrl('/perfect');
+      const outPath = path.join(tempDir, 'readiness-badge.svg');
+
+      await execFileAsync('node', [CLI_PATH, 'scan', url, '-o', outPath]);
+
+      const exists = await fs.stat(outPath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      const content = await fs.readFile(outPath, 'utf8');
+      expect(content).toContain('<svg');
+      expect(content).toContain('Grade A');
+    });
   });
 
   describe('Day 10 Batch Scanning CLI Commands (batch, --sitemap, -f)', () => {

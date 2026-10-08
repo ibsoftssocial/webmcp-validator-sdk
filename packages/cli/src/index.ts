@@ -66,8 +66,8 @@ program
   .option('--category <category>', 'Filter lint findings by category')
   .option('--rules <ids>', 'Comma-separated list of rule IDs to evaluate')
   .option('--skip-rules <ids>', 'Comma-separated list of rule IDs to skip')
-  .option('-o, --output <file>', 'Save output report to file (json, md, html, sarif, or xml)')
-  .option('--format <type>', 'Output format: pretty, json, markdown, html, sarif, junit', 'pretty')
+  .option('-o, --output <file>', 'Save output report to file (json, md, html, sarif, xml, or svg)')
+  .option('--format <type>', 'Output format: pretty, json, markdown, html, sarif, junit, badge', 'pretty')
   .option('--fail-under <score>', 'Exit with code 1 if score is below this threshold')
   .action(async (url: string, options: any) => {
     const timeoutMs = parseInt(options.timeout, 10) || 15000;
@@ -179,6 +179,20 @@ program
       if (options.format === 'junit' || options.format === 'xml') {
         if (readinessReport) {
           console.log(generateReport(readinessReport, 'junit'));
+        }
+        if (
+          failUnderThreshold !== undefined &&
+          readinessReport &&
+          readinessReport.overallScore < failUnderThreshold
+        ) {
+          process.exit(1);
+        }
+        return;
+      }
+
+      if (options.format === 'badge' || options.format === 'svg') {
+        if (readinessReport) {
+          console.log(generateReport(readinessReport, 'badge'));
         }
         if (
           failUnderThreshold !== undefined &&
@@ -417,8 +431,8 @@ program
   .option('-t, --timeout <ms>', 'Timeout per page in milliseconds', '15000')
   .option('-m, --mobile', 'Emulate mobile device viewport and user-agent')
   .option('--block-media', 'Block images, media, and fonts to accelerate scans')
-  .option('-o, --output <file>', 'Save output report to file (json, md, sarif, or xml)')
-  .option('--format <type>', 'Output format: pretty, json, markdown, sarif, junit', 'pretty')
+  .option('-o, --output <file>', 'Save output report to file (json, md, html, sarif, xml, or svg)')
+  .option('--format <type>', 'Output format: pretty, json, markdown, html, sarif, junit, badge', 'pretty')
   .option('--fail-under <score>', 'Exit with code 1 if site-wide average score is below threshold')
   .action(async (cliUrls: string[], options: any) => {
     const urls: string[] = [...cliUrls];
@@ -504,6 +518,8 @@ program
         console.log(generateBatchReport(result, 'markdown'));
       } else if (options.format === 'html') {
         console.log(generateBatchReport(result, 'html'));
+      } else if (options.format === 'badge' || options.format === 'svg') {
+        console.log(generateBatchReport(result, 'badge'));
       } else if (options.format === 'sarif') {
         console.log(generateBatchReport(result, 'sarif'));
       } else if (options.format === 'junit' || options.format === 'xml') {
