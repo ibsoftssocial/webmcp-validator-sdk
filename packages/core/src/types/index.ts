@@ -4,3 +4,4 @@ export * from './finding.js';
 export * from './score.js';
 export * from './rule.js';
 export * from './reporter.js';
+export * from './batch.js';

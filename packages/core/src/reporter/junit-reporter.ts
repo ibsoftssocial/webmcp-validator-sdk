@@ -56,7 +56,9 @@ export function renderJunitReport(
         .map((item) => `• ${item.name}: ${item.details || 'failed'}`)
         .join('\n');
 
-      const failureMessage = `Category score ${cat.score}/100 (${cat.weightedScore.toFixed(1)}/${cat.weight} pts) is below 80% passing threshold`;
+      const weighted = cat.weightedScore !== undefined ? cat.weightedScore : ((cat.score || 0) * (cat.weight || 25)) / 100;
+      const weightVal = cat.weight || 25;
+      const failureMessage = `Category score ${cat.score}/100 (${weighted.toFixed(1)}/${weightVal} pts) is below 80% passing threshold`;
       xmlLines.push(
         `    <testcase classname="${escapeXml(classname)}" name="${escapeXml(title)}" time="0.050">`
       );

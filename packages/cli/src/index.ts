@@ -13,6 +13,9 @@ import {
   saveReportToFile,
   inferReportFormat,
   ReportFormat,
+  batchAudit,
+  generateBatchReport,
+  saveBatchReportToFile,
 } from 'webmcp-validator-sdk';
 
 const program = new Command();
@@ -398,6 +401,138 @@ program
       console.log('');
     } catch (err: any) {
       spinner.fail(`Failed to scan ${url}`);
+      console.error(chalk.red(err instanceof Error ? err.message : String(err)));
+      process.exit(1);
+    }
+  });
+
+program
+  .command('batch')
+  .description('Audit multiple websites or an entire sitemap concurrently with aggregated scoring')
+  .argument('[urls...]', 'Target website URLs to scan')
+  .option('--sitemap <url>', 'Sitemap XML URL to crawl and audit discovered page URLs')
+  .option('-f, --file <path>', 'Read URLs from a text file (one URL per line)')
+  .option('-c, --concurrency <number>', 'Concurrent browser workers (default: 3)', '3')
+  .option('-l, --limit <number>', 'Maximum number of pages to audit (default: 25)', '25')
+  .option('-t, --timeout <ms>', 'Timeout per page in milliseconds', '15000')
+  .option('-m, --mobile', 'Emulate mobile device viewport and user-agent')
+  .option('--block-media', 'Block images, media, and fonts to accelerate scans')
+  .option('-o, --output <file>', 'Save output report to file (json, md, sarif, or xml)')
+  .option('--format <type>', 'Output format: pretty, json, markdown, sarif, junit', 'pretty')
+  .option('--fail-under <score>', 'Exit with code 1 if site-wide average score is below threshold')
+  .action(async (cliUrls: string[], options: any) => {
+    const urls: string[] = [...cliUrls];
+
+    if (options.file) {
+      try {
+        const fileContent = await fs.readFile(path.resolve(options.file), 'utf8');
+        const lines = fileContent
+          .split(/\r?\n/)
+          .map((l) => l.trim())
+          .filter((l) => l.length > 0 && !l.startsWith('#'));
+        urls.push(...lines);
+      } catch (err: any) {
+        console.error(chalk.red(`Error reading URLs file ${options.file}: ${err.message}`));
+        process.exit(1);
+      }
+    }
+
+    if (urls.length === 0 && !options.sitemap) {
+      console.error(chalk.red('Error: No target URLs provided. Specify URLs as arguments, via --file <path>, or via --sitemap <url>.'));
+      process.exit(1);
+    }
+
+    const concurrency = parseInt(options.concurrency, 10) || 3;
+    const limit = parseInt(options.limit, 10) || 25;
+    const timeoutMs = parseInt(options.timeout, 10) || 15000;
+    const failUnderThreshold = options.failUnder ? parseInt(options.failUnder, 10) : undefined;
+    const isPretty = !options.format || options.format === 'pretty';
+
+    const spinner = isPretty ? ora('Starting WebMCP batch audit...').start() : null;
+
+    try {
+      const result = await batchAudit({
+        urls,
+        sitemapUrl: options.sitemap,
+        concurrency,
+        limit,
+        failUnder: failUnderThreshold,
+        scannerOptions: {
+          timeoutMs,
+          isMobile: !!options.mobile,
+          blockMedia: !!options.blockMedia,
+        },
+        onProgress: (p) => {
+          if (!spinner) return;
+          if (p.status === 'scanning') {
+            spinner.text = `[${p.completed}/${p.total}] Scanning ${chalk.cyan(p.currentUrl)}...`;
+          } else if (p.status === 'passed') {
+            spinner.text = `[${p.completed}/${p.total}] ✔ ${chalk.green(p.currentUrl)} (${p.score}/100)`;
+          } else if (p.status === 'failed') {
+            spinner.text = `[${p.completed}/${p.total}] ⚠ ${chalk.yellow(p.currentUrl)} (${p.score}/100)`;
+          } else {
+            spinner.text = `[${p.completed}/${p.total}] ✖ ${chalk.red(p.currentUrl)}`;
+          }
+        },
+      });
+
+      if (spinner) {
+        spinner.succeed(`Batch audit completed: ${result.successfulAudits} of ${result.totalUrls} pages scanned in ${(result.durationMs / 1000).toFixed(2)}s`);
+      }
+
+      // Save report to file if -o / --output specified
+      if (options.output) {
+        const outFormat: ReportFormat =
+          options.format && options.format !== 'pretty'
+            ? (options.format as ReportFormat)
+            : inferReportFormat(options.output);
+        await saveBatchReportToFile(result, options.output, { format: outFormat });
+      }
+
+      // If running inside GitHub Actions, append markdown report to GITHUB_STEP_SUMMARY
+      if (process.env.GITHUB_STEP_SUMMARY) {
+        try {
+          const stepSummaryMarkdown = generateBatchReport(result, 'markdown');
+          await fs.appendFile(process.env.GITHUB_STEP_SUMMARY, stepSummaryMarkdown + '\n', 'utf8');
+        } catch {}
+      }
+
+      // Format stdout output
+      if (options.format === 'json') {
+        console.log(generateBatchReport(result, 'json'));
+      } else if (options.format === 'markdown' || options.format === 'md') {
+        console.log(generateBatchReport(result, 'markdown'));
+      } else if (options.format === 'html') {
+        console.log(generateBatchReport(result, 'html'));
+      } else if (options.format === 'sarif') {
+        console.log(generateBatchReport(result, 'sarif'));
+      } else if (options.format === 'junit' || options.format === 'xml') {
+        console.log(generateBatchReport(result, 'junit'));
+      } else {
+        console.log(generateBatchReport(result, 'pretty'));
+      }
+
+      if (options.output && isPretty) {
+        console.log(chalk.green(`\n✔ Batch audit report saved to ${chalk.bold(options.output)}`));
+      }
+
+      if (
+        failUnderThreshold !== undefined &&
+        result.averageScore < failUnderThreshold
+      ) {
+        console.log(
+          chalk.red.bold(
+            `\n✖ Site-wide average score (${result.averageScore}) is below threshold (--fail-under ${failUnderThreshold}). Exiting with code 1.`
+          )
+        );
+        process.exit(1);
+      }
+
+      process.exit(0);
+    } catch (err: any) {
+      if (spinner) {
+        spinner.fail('Batch audit failed');
+      }
       console.error(chalk.red(err instanceof Error ? err.message : String(err)));
       process.exit(1);
     }

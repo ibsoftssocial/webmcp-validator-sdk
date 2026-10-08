@@ -1,12 +1,20 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { ReportFormat, ReporterOptions, WebMCPReadinessReport } from '../types/index.js';
+import { ReportFormat, ReporterOptions, WebMCPReadinessReport, BatchAuditResult } from '../types/index.js';
 import { renderJsonReport } from './json-reporter.js';
 import { renderMarkdownReport } from './markdown-reporter.js';
 import { renderHtmlReport } from './html-reporter.js';
 import { renderTerminalReport } from './terminal-reporter.js';
 import { renderSarifReport } from './sarif-reporter.js';
 import { renderJunitReport } from './junit-reporter.js';
+import {
+  renderBatchTerminalReport,
+  renderBatchJsonReport,
+  renderBatchMarkdownReport,
+  renderBatchSarifReport,
+  renderBatchJunitReport,
+  renderBatchHtmlReport,
+} from './batch-reporter.js';
 
 /**
  * Infers report format from a file path extension
@@ -76,3 +84,47 @@ export async function saveReportToFile(
 
   await fs.writeFile(resolvedPath, content, 'utf8');
 }
+
+/**
+ * Generates formatted output for a multi-page batch audit
+ */
+export function generateBatchReport(
+  result: BatchAuditResult,
+  format: ReportFormat = 'pretty',
+  options?: ReporterOptions
+): string {
+  switch (format) {
+    case 'json':
+      return renderBatchJsonReport(result, options);
+    case 'markdown':
+      return renderBatchMarkdownReport(result, options);
+    case 'sarif':
+      return renderBatchSarifReport(result, options);
+    case 'junit':
+      return renderBatchJunitReport(result, options);
+    case 'html':
+      return renderBatchHtmlReport(result, options);
+    case 'pretty':
+    default:
+      return renderBatchTerminalReport(result, options);
+  }
+}
+
+/**
+ * Saves a batch audit report to a local file
+ */
+export async function saveBatchReportToFile(
+  result: BatchAuditResult,
+  filePath: string,
+  options?: ReporterOptions & { format?: ReportFormat }
+): Promise<void> {
+  const resolvedPath = path.resolve(filePath);
+  const format = options?.format ?? inferReportFormat(resolvedPath);
+  const content = generateBatchReport(result, format, options);
+
+  const targetDir = path.dirname(resolvedPath);
+  await fs.mkdir(targetDir, { recursive: true });
+
+  await fs.writeFile(resolvedPath, content, 'utf8');
+}
+

@@ -87,4 +87,45 @@ describe('WebMCPValidator SDK (Programmatic API)', () => {
     expect(content).toContain('<!DOCTYPE html>');
     expect(content).toContain('Grade A');
   });
+
+  describe('Day 10 Batch Scanning & Sitemap SDK APIs', () => {
+    it('crawls sitemaps via WebMCPValidator.crawlSitemap()', async () => {
+      const urls = await WebMCPValidator.crawlSitemap(server.getUrl('/sitemap.xml'));
+      expect(urls.length).toBeGreaterThan(0);
+      expect(urls).toContain(server.getUrl('/perfect'));
+    });
+
+    it('runs batch audits via WebMCPValidator.batchAudit()', async () => {
+      const result = await WebMCPValidator.batchAudit({
+        urls: [server.getUrl('/perfect'), server.getUrl('/declarative')],
+        concurrency: 2,
+      });
+
+      expect(result.totalUrls).toBe(2);
+      expect(result.successfulAudits).toBe(2);
+      expect(result.averageScore).toBeGreaterThan(0);
+      expect(result.summary.uniqueTools.length).toBeGreaterThan(0);
+    });
+
+    it('generates and saves batch reports via SDK', async () => {
+      const result = await WebMCPValidator.batchAudit({
+        urls: [server.getUrl('/perfect')],
+      });
+
+      const jsonStr = WebMCPValidator.generateBatchReport(result, 'json');
+      expect(JSON.parse(jsonStr).totalUrls).toBe(1);
+
+      const htmlStr = WebMCPValidator.generateBatchReport(result, 'html');
+      expect(htmlStr).toContain('Site-Wide Batch Audit Report');
+
+      const outPath = path.join(tempDir, 'sdk-batch-report.md');
+      await WebMCPValidator.saveBatchReport(result, outPath);
+
+      const exists = await fs.stat(outPath).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+      const content = await fs.readFile(outPath, 'utf8');
+      expect(content).toContain('# WebMCP Site-Wide Batch Audit Report');
+    });
+  });
 });
+

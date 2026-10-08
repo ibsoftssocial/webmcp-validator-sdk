@@ -355,5 +355,100 @@ describe('CLI Integration Tests (Day 5 Flags & Diagnostics)', () => {
       expect(summaryContent).toContain('## Category Breakdown');
     });
   });
+
+  describe('Day 10 Batch Scanning CLI Commands (batch, --sitemap, -f)', () => {
+    let batchTempDir: string;
+
+    beforeAll(async () => {
+      batchTempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'webmcp-cli-batch-test-'));
+    });
+
+    afterAll(async () => {
+      await fs.rm(batchTempDir, { recursive: true, force: true });
+    });
+
+    it('audits multiple URLs via batch command with --format json', async () => {
+      const url1 = server.getUrl('/perfect');
+      const url2 = server.getUrl('/declarative');
+
+      const { stdout } = await execFileAsync('node', [
+        CLI_PATH,
+        'batch',
+        url1,
+        url2,
+        '--format',
+        'json',
+        '--concurrency',
+        '2',
+      ]);
+
+      const result = JSON.parse(stdout);
+      expect(result.totalUrls).toBe(2);
+      expect(result.successfulAudits).toBe(2);
+      expect(result.averageScore).toBeGreaterThan(0);
+      expect(result.reports).toHaveLength(2);
+    }, 35000);
+
+    it('crawls and audits sitemap via batch --sitemap with --format json', async () => {
+      const sitemapUrl = server.getUrl('/sitemap.xml');
+
+      const { stdout } = await execFileAsync('node', [
+        CLI_PATH,
+        'batch',
+        '--sitemap',
+        sitemapUrl,
+        '--format',
+        'json',
+        '--limit',
+        '5',
+      ]);
+
+      const result = JSON.parse(stdout);
+      expect(result.totalUrls).toBe(2);
+      expect(result.successfulAudits).toBe(2);
+      expect(result.reports.length).toBe(2);
+    }, 35000);
+
+    it('reads URLs from a file via -f and exports batch report to disk via -o', async () => {
+      const urlFile = path.join(batchTempDir, 'urls-to-scan.txt');
+      await fs.writeFile(urlFile, `${server.getUrl('/perfect')}\n# A comment\n${server.getUrl('/declarative')}\n`, 'utf8');
+
+      const outReport = path.join(batchTempDir, 'batch-out.json');
+
+      await execFileAsync('node', [
+        CLI_PATH,
+        'batch',
+        '-f',
+        urlFile,
+        '-o',
+        outReport,
+        '--concurrency',
+        '2',
+      ]);
+
+      const exists = await fs.stat(outReport).then(() => true).catch(() => false);
+      expect(exists).toBe(true);
+
+      const content = await fs.readFile(outReport, 'utf8');
+      const parsed = JSON.parse(content);
+      expect(parsed.totalUrls).toBe(2);
+      expect(parsed.successfulAudits).toBe(2);
+    }, 35000);
+
+    it('enforces --fail-under on batch audits and exits 1 when score is below threshold', async () => {
+      const url = server.getUrl('/legacy'); // Legacy site scores 0
+
+      await expect(
+        execFileAsync('node', [
+          CLI_PATH,
+          'batch',
+          url,
+          '--fail-under',
+          '80',
+        ])
+      ).rejects.toThrow();
+    }, 35000);
+  });
 });
+
 

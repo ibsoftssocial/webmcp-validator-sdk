@@ -25,6 +25,7 @@ export interface ScannerConfig {
 
 export class PlaywrightScanner {
   private browser: Browser | null = null;
+  private browserPromise: Promise<Browser> | null = null;
   private config: Required<ScannerConfig>;
 
   constructor(config: ScannerConfig = {}) {
@@ -45,6 +46,10 @@ export class PlaywrightScanner {
       return this.browser;
     }
 
+    if (this.browserPromise) {
+      return this.browserPromise;
+    }
+
     const launchOptions: any = {
       headless: this.config.headless,
     };
@@ -53,8 +58,16 @@ export class PlaywrightScanner {
       launchOptions.executablePath = this.config.executablePath;
     }
 
-    this.browser = await chromium.launch(launchOptions);
-    return this.browser;
+    this.browserPromise = chromium.launch(launchOptions).then((b) => {
+      this.browser = b;
+      this.browserPromise = null;
+      return b;
+    }).catch((err) => {
+      this.browserPromise = null;
+      throw err;
+    });
+
+    return this.browserPromise;
   }
 
   /**
@@ -335,6 +348,7 @@ export class PlaywrightScanner {
    * Close the underlying browser instance
    */
   async close(): Promise<void> {
+    this.browserPromise = null;
     if (this.browser) {
       await this.browser.close().catch(() => {});
       this.browser = null;

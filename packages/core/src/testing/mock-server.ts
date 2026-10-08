@@ -180,7 +180,7 @@ export class MockServer {
 
         case '/sitemap.xml':
           res.writeHead(200, { 'Content-Type': 'application/xml; charset=utf-8' });
-          res.end(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${this.url}/</loc></url></urlset>`);
+          res.end(`<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>${this.url}/perfect</loc></url><url><loc>${this.url}/declarative</loc></url></urlset>`);
           break;
 
         case '/robots.txt':

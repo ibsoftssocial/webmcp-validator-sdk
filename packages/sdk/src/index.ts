@@ -12,6 +12,13 @@ import {
   saveReportToFile,
   ReportFormat,
   ReporterOptions,
+  batchAudit,
+  BatchAuditOptions,
+  BatchAuditResult,
+  discoverSitemapUrls,
+  SitemapParserOptions,
+  generateBatchReport,
+  saveBatchReportToFile,
 } from '@webmcp-validator/core';
 export * from '@webmcp-validator/core';
 
@@ -88,6 +95,42 @@ export class WebMCPValidator {
     options?: ReporterOptions & { format?: ReportFormat }
   ): Promise<void> {
     return saveReportToFile(report, filePath, options);
+  }
+
+  /**
+   * Run concurrent batch audits across multiple URLs or an entire sitemap
+   */
+  static async batchAudit(options: BatchAuditOptions): Promise<BatchAuditResult> {
+    return batchAudit(options);
+  }
+
+  /**
+   * Crawl a sitemap XML or sitemapindex to discover page URLs
+   */
+  static async crawlSitemap(sitemapUrl: string, options?: SitemapParserOptions): Promise<string[]> {
+    return discoverSitemapUrls(sitemapUrl, options);
+  }
+
+  /**
+   * Generate formatted string for a batch audit report
+   */
+  static generateBatchReport(
+    result: BatchAuditResult,
+    format: ReportFormat = 'pretty',
+    options?: ReporterOptions
+  ): string {
+    return generateBatchReport(result, format, options);
+  }
+
+  /**
+   * Save a batch audit report to disk
+   */
+  static async saveBatchReport(
+    result: BatchAuditResult,
+    filePath: string,
+    options?: ReporterOptions & { format?: ReportFormat }
+  ): Promise<void> {
+    return saveBatchReportToFile(result, filePath, options);
   }
 }
 
