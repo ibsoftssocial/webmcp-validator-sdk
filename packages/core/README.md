@@ -1,6 +1,6 @@
 # @webmcp-validator/core
 
-The core engine powering the WebMCP Validator ecosystem. It provides headless browser scanning via Playwright, deterministic static and dynamic linting, multi-category readiness scoring, and versatile reporting formats (JSON, HTML, Markdown, SARIF, JUnit, SVG Badges).
+The core engine powering the WebMCP Validator ecosystem. It provides headless browser scanning via Playwright, deterministic static and dynamic linting, multi-category readiness scoring, and versatile reporting formats (JSON, HTML, Markdown, SARIF, JUnit).
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../../LICENSE)
@@ -12,7 +12,7 @@ The core engine powering the WebMCP Validator ecosystem. It provides headless br
 - **Automated WebMCP Discovery & Scanning:** Deep runtime scanning of `navigator.modelContext`, HTML `<form>` declarations, `<link rel="model-context">` manifests, `/llms.txt`, and `/robots.txt`.
 - **Deterministic Linter Engine:** Extensible rule registry with 11 built-in rules auditing tool quality, schema correctness, security annotations, and crawler accessibility.
 - **AI Readiness Scoring Model:** Standardized 100-point scoring model across 6 categories (Declarative, Infrastructure, Agent Access, Imperative, Manifest, Chrome AI) mapped to letter grades (A–F).
-- **Multi-Format Reporting:** Generates console tables, raw JSON, GitHub Flavored Markdown, interactive single-file HTML reports, OASIS SARIF 2.1.0 (for GitHub Code Scanning), JUnit XML, and Shields-compatible SVG readiness badges.
+- **Multi-Format Reporting:** Generates console tables, raw JSON, GitHub Flavored Markdown, interactive single-file HTML reports, OASIS SARIF 2.1.0 (for GitHub Code Scanning), and JUnit XML.
 
 ---
 
@@ -58,27 +58,16 @@ console.log(`Overall Score: ${report.overallScore}/100 (Grade ${report.grade})`)
 console.log(`Passed: ${report.passed}`);
 ```
 
-### 3. Generating Reports & SVG Badges
+### 3. Generating Reports & Saving to Disk
 
 ```typescript
-import {
-  generateReport,
-  generateReadinessBadge,
-  saveReadinessBadgeToFile,
-} from '@webmcp-validator/core';
+import { generateReport, saveReportToFile } from '@webmcp-validator/core';
 
-// Export report as interactive HTML
-const htmlReport = generateReport(report, { format: 'html' });
+// Export report as interactive HTML string
+const htmlReport = generateReport(report, 'html');
 
-// Generate embeddable SVG readiness badge
-const svg = generateReadinessBadge(report, {
-  type: 'combined',
-  label: 'WebMCP',
-  style: 'flat',
-});
-
-// Save badge directly to file
-await saveReadinessBadgeToFile(report, './badge.svg');
+// Or save directly to file (.html, .json, .md, .sarif, .xml)
+await saveReportToFile(report, './reports/audit.html');
 ```
 
 ---
@@ -91,7 +80,7 @@ await saveReadinessBadgeToFile(report, './badge.svg');
 | **Discovery** | `src/discovery/` | Sitemap parser, multi-source resolution, and `robots.txt` / `llms.txt` crawler checks. |
 | **Linter** | `src/linter/` | Pluggable rule engine and registry with 11 built-in validation rules. |
 | **Scorer** | `src/scorer/` | Weighted readiness calculation, category checklists, and grade resolution. |
-| **Reporter** | `src/reporter/` | Pretty CLI tables, JSON, Markdown, standalone HTML, SARIF 2.1.0, JUnit XML, and SVG badges. |
+| **Reporter** | `src/reporter/` | Pretty CLI tables, JSON, Markdown, standalone HTML, SARIF 2.1.0, and JUnit XML. |
 
 ---
 

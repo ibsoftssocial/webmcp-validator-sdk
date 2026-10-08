@@ -15,7 +15,6 @@ import {
   renderBatchJunitReport,
   renderBatchHtmlReport,
 } from './batch-reporter.js';
-import { generateReadinessBadge, generateBatchReadinessBadge } from './badge-reporter.js';
 
 /**
  * Infers report format from a file path extension
@@ -35,9 +34,6 @@ export function inferReportFormat(filePath: string): ReportFormat {
     case '.junit':
       return 'junit';
     case '.json':
-      return 'json';
-    case '.svg':
-      return 'badge';
     default:
       return 'json';
   }
@@ -62,8 +58,6 @@ export function generateReport(
       return renderSarifReport(report, options);
     case 'junit':
       return renderJunitReport(report, options);
-    case 'badge':
-      return generateReadinessBadge(report, options?.badgeOptions);
     case 'pretty':
       return renderTerminalReport(report, options);
     default:
@@ -109,8 +103,6 @@ export function generateBatchReport(
       return renderBatchJunitReport(result, options);
     case 'html':
       return renderBatchHtmlReport(result, options);
-    case 'badge':
-      return generateBatchReadinessBadge(result, options?.badgeOptions);
     case 'pretty':
     default:
       return renderBatchTerminalReport(result, options);
@@ -134,4 +126,3 @@ export async function saveBatchReportToFile(
 
   await fs.writeFile(resolvedPath, content, 'utf8');
 }
-

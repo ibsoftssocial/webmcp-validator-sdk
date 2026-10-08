@@ -28,11 +28,8 @@ console.log(`Score: ${report.overallScore}/100 (Grade ${report.grade})`);
 console.log(`Passed: ${report.passed}`);
 console.log(`Tools detected: ${report.toolCount}`);
 
-// 2. Generate and save an SVG readiness badge
-await WebMCPValidator.saveBadge(report, './badge.svg', {
-  label: 'WebMCP',
-  type: 'combined', // 'combined' | 'grade' | 'score' | 'compact'
-});
+// 2. Save interactive HTML report to disk
+await WebMCPValidator.saveReport(report, './report.html', { format: 'html' });
 ```
 
 ---
@@ -59,8 +56,8 @@ const sitemapResult = await WebMCPValidator.auditSitemap(
   { concurrency: 5, maxUrls: 50 }
 );
 
-// Save batch readiness badge
-await WebMCPValidator.saveBatchBadge(sitemapResult, './site-badge.svg');
+// Save batch report
+await WebMCPValidator.saveBatchReport(sitemapResult, './site-report.html', { format: 'html' });
 ```
 
 ---
@@ -91,25 +88,6 @@ const report = await WebMCPValidator.audit('https://example.com', {
 
   // Rule execution filter
   rules: ['IMP-001', 'TQ-001', 'SEC-001'],
-});
-```
-
----
-
-## 🛡️ Embeddable SVG Readiness Badges
-
-```typescript
-// Generate raw SVG markup string
-const svg = WebMCPValidator.generateBadge(report, {
-  type: 'combined',
-  style: 'flat', // 'flat' (rounded) | 'flat-square'
-});
-
-// Generate Markdown embedding snippet for your README
-const snippet = WebMCPValidator.generateMarkdownBadgeSnippet({
-  badgePathOrUrl: './badge.svg',
-  targetUrl: 'https://example.com',
-  altText: 'WebMCP AI Readiness',
 });
 ```
 

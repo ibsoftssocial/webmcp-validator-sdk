@@ -1,6 +1,6 @@
 # webmcp-validator-cli
 
-The official command-line interface for the WebMCP Validator ecosystem. Scan local or public websites, lint WebMCP tool declarations, enforce quality thresholds in CI/CD pipelines, and export audit reports and SVG badges.
+The official command-line interface for the WebMCP Validator ecosystem. Scan local or public websites, lint WebMCP tool declarations, enforce quality thresholds in CI/CD pipelines, and export audit reports.
 
 [![CLI](https://img.shields.io/badge/CLI-webmcp--validator-orange.svg)](https://npmjs.com/package/webmcp-validator-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../../LICENSE)
@@ -72,7 +72,6 @@ Export reports in various formats using `--format <type>` or by specifying file 
 | `--format html` | File (`-o report.html`) | Interactive, standalone visual dashboard |
 | `--format sarif` | File (`-o results.sarif`) | GitHub Code Scanning Security Alerts |
 | `--format junit` | File (`-o junit.xml`) | CI/CD Native Test Summary tabs |
-| `--format badge` | File (`-o badge.svg`) | Embeddable SVG AI Readiness Badge |
 
 ### Export Examples
 
@@ -82,9 +81,6 @@ npx webmcp-validator scan https://example.com -o reports/audit.html
 
 # Export SARIF for GitHub Security tab
 npx webmcp-validator scan https://example.com --format sarif -o results.sarif
-
-# Export SVG readiness badge
-npx webmcp-validator scan https://example.com --format badge -o badges/webmcp.svg
 
 # Export batch HTML summary
 npx webmcp-validator batch --sitemap https://example.com/sitemap.xml -o site-audit.html

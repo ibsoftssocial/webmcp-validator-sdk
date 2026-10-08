@@ -3,9 +3,8 @@
 > **The enterprise-grade developer toolkit and automated auditing suite to scan, lint, score, and validate WebMCP implementations on modern websites.**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
-[![Tests](https://img.shields.io/badge/tests-212%20passed-brightgreen.svg)](https://vitest.dev/)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://vitest.dev/)
 [![W3C Draft](https://img.shields.io/badge/W3C-WebMCP_Draft-blue)](https://webmachinelearning.github.io/webmcp/)
-[![Readiness Badge](https://img.shields.io/badge/WebMCP-Grade_A_(95)-10b981.svg)](./docs/badges.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 
 ---
@@ -21,7 +20,6 @@
 - [CI/CD Integration & GitHub Actions](#-cicd-integration--github-actions)
 - [Scoring Model & Grades](#-scoring-model--grades)
 - [Built-in Rule Catalog](#-built-in-rule-catalog)
-- [Embeddable SVG Readiness Badges](#-embeddable-svg-readiness-badges)
 - [License](#-license)
 
 ---
@@ -32,7 +30,7 @@ As AI agents and web copilots proliferate, websites must expose structured, secu
 
 1. **Deep Runtime Discovery:** Discovers WebMCP tools exposed across `navigator.modelContext`, declarative HTML `<form>` attributes, `<link rel="model-context">` manifests, `/llms.txt`, and `/robots.txt`.
 2. **Deterministic Linter Engine:** Evaluates tool quality, JSON schema consistency, and safety hints (e.g. human-in-the-loop safeguards for mutating operations).
-3. **Multi-Format Export & Reporting:** Interactive terminal tables, raw JSON, PR Markdown summaries, standalone self-contained HTML dashboards, OASIS SARIF 2.1.0 for GitHub Security scanning, JUnit XML for CI/CD test runners, and Shields-compatible SVG badges.
+3. **Multi-Format Export & Reporting:** Interactive terminal tables, raw JSON, PR Markdown summaries, standalone self-contained HTML dashboards, OASIS SARIF 2.1.0 for GitHub Security scanning, and JUnit XML for CI/CD test runners.
 4. **Site-Wide Batch Auditing:** Concurrently audits hundreds of URLs via XML sitemaps or URL lists.
 
 ---
@@ -61,7 +59,7 @@ cd webmcp-validator-sdk
 npm install
 npm run build
 
-# Run comprehensive test suite (212+ unit & integration tests)
+# Run test suite
 npm test
 ```
 
@@ -83,9 +81,6 @@ npx webmcp-validator scan https://example.com -o reports/audit.html
 
 # Audit an entire website via XML sitemap with 4 concurrent workers
 npx webmcp-validator batch --sitemap https://example.com/sitemap.xml --concurrency 4 -o site-audit.html
-
-# Generate an embeddable SVG readiness badge
-npx webmcp-validator scan https://example.com --format badge -o badges/readiness.svg
 ```
 
 ---
@@ -104,12 +99,8 @@ const report = await WebMCPValidator.audit('https://example.com', {
 console.log(`Readiness Score: ${report.overallScore}/100 (Grade ${report.grade})`);
 console.log(`Tools Found: ${report.toolCount}`);
 
-// Save embeddable SVG badge to disk
-await WebMCPValidator.saveBadge(report, './badge.svg', {
-  type: 'combined', // 'combined' | 'grade' | 'score' | 'compact'
-  label: 'WebMCP',
-  style: 'flat',
-});
+// Save report to disk
+await WebMCPValidator.saveReport(report, './report.html', { format: 'html' });
 
 // Site-Wide Sitemap Audit
 const batchResult = await WebMCPValidator.auditSitemap('https://example.com/sitemap.xml', {
@@ -129,7 +120,6 @@ console.log(`Average Score: ${batchResult.averageScore}/100 (Grade ${batchResult
 | [**Linter Rules Catalog**](./docs/rules/README.md) | Complete registry of all 11 built-in rules with code examples and remediations. |
 | [**Scoring Model & Grading**](./docs/scoring-model.md) | In-depth breakdown of the 6 readiness categories, weights, checklists, and grades. |
 | [**CI/CD Integration Guide**](./docs/ci-cd-integration.md) | Step-by-step guides for GitHub Actions, GitLab CI, SARIF code scanning, and PR gating. |
-| [**SVG Readiness Badges**](./docs/badges.md) | Guide to generating, styling, and embedding vector readiness badges in READMEs. |
 
 ---
 
@@ -194,19 +184,6 @@ Read the full [Scoring Model Guide](./docs/scoring-model.md) for category weight
 | [`DISC-002`](./docs/rules/DISC-002.md) | `discoverability` | `warning`/`info` | Agent Directives (llms.txt & robots.txt) |
 
 Explore the [Complete Rule Catalog](./docs/rules/README.md).
-
----
-
-## 🛡️ Embeddable SVG Readiness Badges
-
-Showcase your site's AI readiness in your project documentation:
-
-```markdown
-<!-- Standard Combined Badge -->
-[![WebMCP Readiness](https://example.com/badges/readiness.svg)](https://example.com)
-```
-
-Read the [Badges Guide](./docs/badges.md) for customization options.
 
 ---
 

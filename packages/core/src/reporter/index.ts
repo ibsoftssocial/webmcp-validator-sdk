@@ -5,5 +5,4 @@ export * from './terminal-reporter.js';
 export * from './sarif-reporter.js';
 export * from './junit-reporter.js';
 export * from './batch-reporter.js';
-export * from './badge-reporter.js';
 export * from './reporter.js';

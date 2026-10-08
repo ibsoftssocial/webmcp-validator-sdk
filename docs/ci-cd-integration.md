@@ -102,25 +102,6 @@ Generate JUnit XML reports to display test runs in GitHub Actions UI summaries:
     report_paths: 'reports/junit.xml'
 ```
 
----
-
-### 4. Automated Readiness Badge Generation & Deployment
-
-Generate SVG badges on every deploy and save them to your repository or GitHub Pages:
-
-```yaml
-- name: Generate WebMCP SVG Badge
-  run: |
-    npx webmcp-validator scan https://example.com \
-      --format badge \
-      -o public/badges/webmcp.svg
-
-- name: Commit Badge to Repository
-  uses: stefanzweifel/git-auto-commit-action@v5
-  with:
-    commit_message: "chore: update WebMCP readiness badge [skip ci]"
-    file_pattern: "public/badges/*.svg"
-```
 
 ---
 
