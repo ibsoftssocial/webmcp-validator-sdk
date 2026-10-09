@@ -61,5 +61,6 @@ runs:
         if [ -f "$GITHUB_ACTION_PATH/packages/cli/dist/index.js" ]; then
           node "$GITHUB_ACTION_PATH/packages/cli/dist/index.js" $ARGS
         else
-          npx webmcp-validator $ARGS
+          npx webmcp-validator-cli $ARGS
         fi
+

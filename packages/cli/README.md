@@ -2,7 +2,10 @@
 
 The official command-line interface for the WebMCP Validator ecosystem. Scan local or public websites, lint WebMCP tool declarations, enforce quality thresholds in CI/CD pipelines, and export audit reports.
 
-[![CLI](https://img.shields.io/badge/CLI-webmcp--validator-orange.svg)](https://npmjs.com/package/webmcp-validator-cli)
+🌐 **Official Website:** [https://webmcpworld.com](https://webmcpworld.com/)
+
+[![CLI](https://img.shields.io/badge/CLI-webmcp--validator--cli-orange.svg)](https://npmjs.com/package/webmcp-validator-cli)
+[![Website](https://img.shields.io/badge/Website-webmcpworld.com-007acc?style=flat)](https://webmcpworld.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../../LICENSE)
 
 ---
@@ -12,7 +15,7 @@ The official command-line interface for the WebMCP Validator ecosystem. Scan loc
 Run directly via `npx` without installation:
 
 ```bash
-npx webmcp-validator scan https://example.com
+npx webmcp-validator-cli scan https://example.com
 ```
 
 Or install globally:
@@ -33,29 +36,29 @@ webmcp scan https://example.com
 
 ```bash
 # Standard interactive audit
-npx webmcp-validator scan https://example.com
+npx webmcp-validator-cli scan https://example.com
 
 # Audit local development server
-npx webmcp-validator scan http://localhost:3000
+npx webmcp-validator-cli scan http://localhost:3000
 
 # CI/CD failure gating (exits 1 if score < 80)
-npx webmcp-validator scan http://localhost:3000 --fail-under 80
+npx webmcp-validator-cli scan http://localhost:3000 --fail-under 80
 
 # Emulate mobile viewport & user agent
-npx webmcp-validator scan https://example.com --mobile
+npx webmcp-validator-cli scan https://example.com --mobile
 ```
 
 ### 2. Multi-Page & Sitemap Batch Auditing (`batch`)
 
 ```bash
 # Audit multiple specific URLs
-npx webmcp-validator batch https://example.com https://example.com/docs https://example.com/api
+npx webmcp-validator-cli batch https://example.com https://example.com/docs https://example.com/api
 
 # Audit entire website via XML sitemap
-npx webmcp-validator batch --sitemap https://example.com/sitemap.xml --concurrency 4
+npx webmcp-validator-cli batch --sitemap https://example.com/sitemap.xml --concurrency 4
 
 # Read URL list from a text file
-npx webmcp-validator batch -f urls.txt -o batch-report.html
+npx webmcp-validator-cli batch -f urls.txt -o batch-report.html
 ```
 
 ---
@@ -77,13 +80,13 @@ Export reports in various formats using `--format <type>` or by specifying file 
 
 ```bash
 # Export interactive HTML report
-npx webmcp-validator scan https://example.com -o reports/audit.html
+npx webmcp-validator-cli scan https://example.com -o reports/audit.html
 
 # Export SARIF for GitHub Security tab
-npx webmcp-validator scan https://example.com --format sarif -o results.sarif
+npx webmcp-validator-cli scan https://example.com --format sarif -o results.sarif
 
 # Export batch HTML summary
-npx webmcp-validator batch --sitemap https://example.com/sitemap.xml -o site-audit.html
+npx webmcp-validator-cli batch --sitemap https://example.com/sitemap.xml -o site-audit.html
 ```
 
 ---

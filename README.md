@@ -2,6 +2,9 @@
 
 > **The enterprise-grade developer toolkit and automated auditing suite to scan, lint, score, and validate WebMCP implementations on modern websites.**
 
+🌐 **Official Website:** [https://webmcpworld.com](https://webmcpworld.com/)
+
+[![Website](https://img.shields.io/badge/Website-webmcpworld.com-007acc?style=flat)](https://webmcpworld.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)](https://vitest.dev/)
 [![W3C Draft](https://img.shields.io/badge/W3C-WebMCP_Draft-blue)](https://webmachinelearning.github.io/webmcp/)
@@ -71,16 +74,16 @@ Run audits directly with zero installation via `npx`:
 
 ```bash
 # Audit any website for WebMCP readiness
-npx webmcp-validator scan https://example.com
+npx webmcp-validator-cli scan https://example.com
 
 # Audit local development server with CI failure threshold
-npx webmcp-validator scan http://localhost:3000 --fail-under 80
+npx webmcp-validator-cli scan http://localhost:3000 --fail-under 80
 
 # Export interactive standalone HTML report
-npx webmcp-validator scan https://example.com -o reports/audit.html
+npx webmcp-validator-cli scan https://example.com -o reports/audit.html
 
 # Audit an entire website via XML sitemap with 4 concurrent workers
-npx webmcp-validator batch --sitemap https://example.com/sitemap.xml --concurrency 4 -o site-audit.html
+npx webmcp-validator-cli batch --sitemap https://example.com/sitemap.xml --concurrency 4 -o site-audit.html
 ```
 
 ---

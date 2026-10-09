@@ -69,7 +69,7 @@ jobs:
 
       - name: Run WebMCP Scan with SARIF Export
         run: |
-          npx webmcp-validator scan https://staging.example.com \
+          npx webmcp-validator-cli scan https://staging.example.com \
             --format sarif \
             -o results.sarif \
             --fail-under 80
@@ -90,7 +90,7 @@ Generate JUnit XML reports to display test runs in GitHub Actions UI summaries:
 ```yaml
 - name: Run WebMCP Audit (JUnit XML)
   run: |
-    npx webmcp-validator scan http://localhost:3000 \
+    npx webmcp-validator-cli scan http://localhost:3000 \
       --format junit \
       -o reports/junit.xml \
       --fail-under 80
@@ -120,7 +120,7 @@ webmcp_readiness:
   before_script:
     - npx playwright install-deps chromium
   script:
-    - npx webmcp-validator scan https://staging.example.com --fail-under 80 --format junit -o junit.xml
+    - npx webmcp-validator-cli scan https://staging.example.com --fail-under 80 --format junit -o junit.xml
   artifacts:
     when: always
     reports:
@@ -142,7 +142,7 @@ pipelines:
           image: node:20
           script:
             - npx playwright install --with-deps chromium
-            - npx webmcp-validator scan https://example.com --fail-under 80 -o report.html
+            - npx webmcp-validator-cli scan https://example.com --fail-under 80 -o report.html
           artifacts:
             - report.html
 ```
@@ -158,11 +158,11 @@ The `--fail-under` flag controls the strictness of CI gating:
 
 ```bash
 # Permissive warning mode (score >= 60 passes)
-npx webmcp-validator scan https://example.com --fail-under 60
+npx webmcp-validator-cli scan https://example.com --fail-under 60
 
 # Production readiness gate (score >= 80 passes)
-npx webmcp-validator scan https://example.com --fail-under 80
+npx webmcp-validator-cli scan https://example.com --fail-under 80
 
 # Strict enterprise gate (requires Grade A, score >= 90)
-npx webmcp-validator scan https://example.com --fail-under 90
+npx webmcp-validator-cli scan https://example.com --fail-under 90
 ```

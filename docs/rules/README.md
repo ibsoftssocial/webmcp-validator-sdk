@@ -51,5 +51,5 @@ const report = await WebMCPValidator.audit('https://example.com', {
 ### CLI Command Options
 ```bash
 # Ignore non-critical informational warnings
-npx webmcp-validator scan https://example.com --fail-under 80
+npx webmcp-validator-cli scan https://example.com --fail-under 80
 ```

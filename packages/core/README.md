@@ -2,7 +2,10 @@
 
 The core engine powering the WebMCP Validator ecosystem. It provides headless browser scanning via Playwright, deterministic static and dynamic linting, multi-category readiness scoring, and versatile reporting formats (JSON, HTML, Markdown, SARIF, JUnit).
 
+🌐 **Official Website:** [https://webmcpworld.com](https://webmcpworld.com/)
+
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![Website](https://img.shields.io/badge/Website-webmcpworld.com-007acc?style=flat)](https://webmcpworld.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](../../LICENSE)
 
 ---
