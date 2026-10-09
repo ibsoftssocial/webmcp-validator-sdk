@@ -575,7 +575,7 @@ export function renderHtmlReport(
       </div>
       <div class="header-meta">
         <div>Audited on ${escapeHtml(dateStr)}</div>
-        <div>Engine: WebMCP Validator v0.1.0</div>
+        <div>Engine: WebMCP Validator v0.1.1</div>
       </div>
     </header>
 

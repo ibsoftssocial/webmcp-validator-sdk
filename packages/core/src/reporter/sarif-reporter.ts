@@ -117,7 +117,7 @@ export function renderSarifReport(
         tool: {
           driver: {
             name: 'webmcp-validator',
-            version: '0.1.0',
+            version: '0.1.1',
             informationUri: 'https://github.com/ibsoftssocial/webmcp-validator-sdk',
             rules: Array.from(rulesMap.values()),
           },

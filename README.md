@@ -42,9 +42,9 @@ As AI agents and web copilots proliferate, websites must expose structured, secu
 
 | Package | Version | Description | Documentation |
 |---|---|---|---|
-| [`webmcp-validator-sdk`](./packages/sdk) | `0.1.0` | Programmatic Node.js / TypeScript SDK API | [SDK README](./packages/sdk/README.md) |
-| [`webmcp-validator-cli`](./packages/cli) | `0.1.0` | Command-line scanner and CI/CD gating executable | [CLI README](./packages/cli/README.md) |
-| [`@webmcp-validator/core`](./packages/core) | `0.1.0` | Core headless browser scanner, rules, and scoring engine | [Core README](./packages/core/README.md) |
+| [`webmcp-validator-sdk`](./packages/sdk) | `0.1.1` | Programmatic Node.js / TypeScript SDK API | [SDK README](./packages/sdk/README.md) |
+| [`webmcp-validator-cli`](./packages/cli) | `0.1.1` | Command-line scanner and CI/CD gating executable | [CLI README](./packages/cli/README.md) |
+| [`@webmcp-validator/core`](./packages/core) | `0.1.1` | Core headless browser scanner, rules, and scoring engine | [Core README](./packages/core/README.md) |
 
 ---
 

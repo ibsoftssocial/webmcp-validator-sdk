@@ -19,7 +19,7 @@ describe('WebMCPValidator SDK (Programmatic API)', () => {
   });
 
   it('exposes version and convenience alias', () => {
-    expect(WebMCPValidator.version).toBe('0.1.0');
+    expect(WebMCPValidator.version).toBe('0.1.1');
     expect(WebMCP).toBe(WebMCPValidator);
   });
 

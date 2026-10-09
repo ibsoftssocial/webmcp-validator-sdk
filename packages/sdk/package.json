@@ -1,6 +1,6 @@
 {
   "name": "webmcp-validator-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript/Node.js SDK to scan, audit, and validate WebMCP implementations",
   "author": "ibsoftssocial",
   "license": "MIT",
@@ -47,7 +47,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@webmcp-validator/core": "^0.1.0"
+    "@webmcp-validator/core": "^0.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

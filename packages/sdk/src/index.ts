@@ -36,7 +36,7 @@ export class WebMCPValidator {
   /**
    * Version of the WebMCP Validator SDK
    */
-  static readonly version = '0.1.0';
+  static readonly version = '0.1.1';
 
   /**
    * Scan a website URL using headless Chromium to discover WebMCP tools and APIs

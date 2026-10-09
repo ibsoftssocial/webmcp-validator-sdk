@@ -92,7 +92,7 @@ export async function discoverManifest(options: ManifestDiscovererOptions): Prom
       const response = await fetchFn(candidateUrl, {
         headers: {
           'Accept': 'application/json, text/plain, */*',
-          'User-Agent': 'WebMCP-Validator/0.1.0 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
+          'User-Agent': 'WebMCP-Validator/0.1.1 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
         },
         signal: AbortSignal.timeout(timeoutMs),
       });

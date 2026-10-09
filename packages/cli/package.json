@@ -1,6 +1,6 @@
 {
   "name": "webmcp-validator-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command-line interface to audit, scan, and validate WebMCP tools",
   "author": "ibsoftssocial",
   "license": "MIT",
@@ -46,8 +46,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@webmcp-validator/core": "^0.1.0",
-    "webmcp-validator-sdk": "^0.1.0",
+    "@webmcp-validator/core": "^0.1.1",
+    "webmcp-validator-sdk": "^0.1.1",
     "boxen": "^8.0.1",
     "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",

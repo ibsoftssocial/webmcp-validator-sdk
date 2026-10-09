@@ -117,7 +117,7 @@ export async function discoverAgentDirectives(
       const res = await fetchFn(candidate, {
         headers: {
           'Accept': 'text/plain, text/markdown, */*',
-          'User-Agent': 'WebMCP-Validator/0.1.0 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
+          'User-Agent': 'WebMCP-Validator/0.1.1 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
         },
         signal: AbortSignal.timeout(timeoutMs),
       });
@@ -147,7 +147,7 @@ export async function discoverAgentDirectives(
       const res = await fetchFn(fullLlmsUrl, {
         headers: {
           'Accept': 'text/plain, text/markdown, */*',
-          'User-Agent': 'WebMCP-Validator/0.1.0 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
+          'User-Agent': 'WebMCP-Validator/0.1.1 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
         },
         signal: AbortSignal.timeout(timeoutMs),
       });
@@ -170,7 +170,7 @@ export async function discoverAgentDirectives(
       const res = await fetchFn(robotsUrl, {
         headers: {
           'Accept': 'text/plain, */*',
-          'User-Agent': 'WebMCP-Validator/0.1.0 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
+          'User-Agent': 'WebMCP-Validator/0.1.1 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
         },
         signal: AbortSignal.timeout(timeoutMs),
       });
@@ -199,7 +199,7 @@ export async function discoverAgentDirectives(
       const res = await fetchFn(candidateSitemap, {
         headers: {
           'Accept': 'application/xml, text/xml, */*',
-          'User-Agent': 'WebMCP-Validator/0.1.0 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
+          'User-Agent': 'WebMCP-Validator/0.1.1 (+https://github.com/ibsoftssocial/webmcp-validator-sdk)',
         },
         signal: AbortSignal.timeout(timeoutMs),
       });

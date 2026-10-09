@@ -23,7 +23,7 @@ const program = new Command();
 program
   .name('webmcp-validator')
   .description('Audit, scan, and validate WebMCP tools on websites')
-  .version('0.1.0');
+  .version('0.1.1');
 
 function getGradeBadge(grade: GradeRating): string {
   switch (grade) {
