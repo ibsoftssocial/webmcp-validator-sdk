@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { batchAudit } from '../batch-scanner.js';
 import { MockServer, startMockServer } from '../../testing/mock-server.js';
 import { BatchAuditProgress } from '../../types/batch.js';

@@ -2,6 +2,36 @@
   "name": "webmcp-validator-sdk",
   "version": "0.1.0",
   "description": "TypeScript/Node.js SDK to scan, audit, and validate WebMCP implementations",
+  "author": "ibsoftssocial",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ibsoftssocial/webmcp-validator-sdk.git",
+    "directory": "packages/sdk"
+  },
+  "homepage": "https://github.com/ibsoftssocial/webmcp-validator-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/ibsoftssocial/webmcp-validator-sdk/issues"
+  },
+  "keywords": [
+    "webmcp",
+    "mcp",
+    "model-context-protocol",
+    "sdk",
+    "ai-agents",
+    "ai-readiness",
+    "validator",
+    "typescript",
+    "node"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -17,7 +47,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@webmcp-validator/core": "*"
+    "@webmcp-validator/core": "^0.1.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

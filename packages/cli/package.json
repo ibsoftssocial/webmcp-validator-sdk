@@ -2,6 +2,37 @@
   "name": "webmcp-validator-cli",
   "version": "0.1.0",
   "description": "Command-line interface to audit, scan, and validate WebMCP tools",
+  "author": "ibsoftssocial",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ibsoftssocial/webmcp-validator-sdk.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://github.com/ibsoftssocial/webmcp-validator-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/ibsoftssocial/webmcp-validator-sdk/issues"
+  },
+  "keywords": [
+    "webmcp",
+    "mcp",
+    "model-context-protocol",
+    "cli",
+    "validator",
+    "linter",
+    "ai-readiness",
+    "scanner",
+    "terminal",
+    "ci-cd"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "type": "module",
   "bin": {
     "webmcp-validator": "./dist/index.js",
@@ -15,8 +46,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@webmcp-validator/core": "*",
-    "webmcp-validator-sdk": "*",
+    "@webmcp-validator/core": "^0.1.0",
+    "webmcp-validator-sdk": "^0.1.0",
     "boxen": "^8.0.1",
     "chalk": "^5.4.1",
     "cli-table3": "^0.6.5",

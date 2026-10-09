@@ -3,6 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "description": "WebMCP Validator Developer Toolkit, Scanner & CLI Monorepo",
+  "author": "ibsoftssocial",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ibsoftssocial/webmcp-validator-sdk.git"
+  },
+  "homepage": "https://github.com/ibsoftssocial/webmcp-validator-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/ibsoftssocial/webmcp-validator-sdk/issues"
+  },
   "workspaces": [
     "packages/*"
   ],
