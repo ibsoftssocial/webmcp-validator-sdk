@@ -98,6 +98,13 @@ npx webmcp-validator-cli batch --sitemap https://example.com/sitemap.xml -o site
 
 ---
 
+## 📚 Complete Developer Documentation
+
+For full command flags, batch crawling recipes, and CI/CD quality gate examples, view the [**WebMCP Developer Guide**](../../docs/developer-guide.md).
+
+---
+
 ## 📄 License
 
 MIT © 2026
+

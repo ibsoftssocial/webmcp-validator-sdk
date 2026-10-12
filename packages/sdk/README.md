@@ -96,6 +96,13 @@ const report = await WebMCPValidator.audit('https://example.com', {
 
 ---
 
+## 📚 Complete Developer Documentation
+
+For full programmatic API references, custom pipeline architectures, and production recipes, view the [**WebMCP Developer Guide**](../../docs/developer-guide.md).
+
+---
+
 ## 📄 License
 
 MIT © 2026
+

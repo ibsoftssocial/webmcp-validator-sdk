@@ -120,6 +120,7 @@ console.log(`Average Score: ${batchResult.averageScore}/100 (Grade ${batchResult
 
 | Guide | Description |
 |---|---|
+| [**Developer Guide & SDK/CLI Reference**](./docs/developer-guide.md) | Complete engineering guide for the SDK and CLI with commands, types, and production recipes. |
 | [**Linter Rules Catalog**](./docs/rules/README.md) | Complete registry of all 11 built-in rules with code examples and remediations. |
 | [**Scoring Model & Grading**](./docs/scoring-model.md) | In-depth breakdown of the 6 readiness categories, weights, checklists, and grades. |
 | [**CI/CD Integration Guide**](./docs/ci-cd-integration.md) | Step-by-step guides for GitHub Actions, GitLab CI, SARIF code scanning, and PR gating. |

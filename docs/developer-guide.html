@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebMCP Developer Documentation & SDK/CLI Reference</title>
+  <meta name="description" content="Comprehensive engineering guide for scanning, linting, scoring, and integrating WebMCP on modern web applications.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e17;
+      --bg-secondary: #111827;
+      --bg-tertiary: #1f2937;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-focus: #3b82f6;
+      --text-primary: #f9fafb;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-purple: #8b5cf6;
+      --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-red: #ef4444;
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 290px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      padding: 24px 16px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--border-color);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+
+    .brand-name {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-tag {
+      font-size: 10px;
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--accent-cyan);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+      font-weight: 600;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+      padding-left: 8px;
+    }
+
+    .nav-list {
+      list-style: none;
+    }
+
+    .nav-link {
+      display: block;
+      padding: 7px 10px;
+      border-radius: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13.5px;
+      transition: all 0.15s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-link.active {
+      color: var(--accent-cyan);
+      background: rgba(6, 182, 212, 0.1);
+      font-weight: 600;
+    }
+
+    /* Main Content Area */
+    .content {
+      flex: 1;
+      max-width: 1020px;
+      padding: 48px 60px;
+      overflow-x: hidden;
+    }
+
+    /* Hero Section */
+    .hero {
+      margin-bottom: 48px;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    .badge-primary {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: rgba(59, 130, 246, 0.3);
+      color: #93c5fd;
+    }
+
+    .hero-title {
+      font-size: 40px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      max-width: 800px;
+      line-height: 1.6;
+    }
+
+    /* Section Styling */
+    section {
+      margin-bottom: 64px;
+      scroll-margin-top: 40px;
+    }
+
+    h2 {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h3 {
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin: 28px 0 12px;
+      color: #e5e7eb;
+    }
+
+    p {
+      color: #d1d5db;
+      margin-bottom: 16px;
+      font-size: 15px;
+    }
+
+    /* Cards & Grids */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .card-icon {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 16px;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* Code Blocks */
+    .code-container {
+      position: relative;
+      margin: 18px 0 24px;
+      border-radius: 10px;
+      background: #0d1117;
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+    }
+
+    .code-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .copy-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-secondary);
+      border-radius: 5px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+    }
+
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: #e6edf3;
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    p code, li code, td code {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #93c5fd;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 20px 0;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    th {
+      background: rgba(255, 255, 255, 0.04);
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: #d1d5db;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Interactive Checklist */
+    .checklist {
+      list-style: none;
+      margin: 16px 0;
+    }
+
+    .checklist-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .check-icon {
+      color: var(--accent-green);
+      font-weight: 700;
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      body {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+      .content {
+        padding: 32px 20px;
+      }
+      .hero-title {
+        font-size: 30px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation Sidebar -->
+  <aside class="sidebar">
+    <a href="https://webmcpworld.com" class="brand" target="_blank" rel="noopener">
+      <div class="brand-logo">W</div>
+      <div>
+        <div class="brand-name">WebMCP Validator <span class="brand-tag">v0.1.1</span></div>
+        <div style="font-size: 11px; color: var(--text-muted);">Official Developer Docs</div>
+      </div>
+    </a>
+
+    <div class="nav-section">
+      <div class="nav-title">Getting Started</div>
+      <ul class="nav-list">
+        <li><a href="#overview" class="nav-link active">1. Overview</a></li>
+        <li><a href="#architecture" class="nav-link">2. Architecture</a></li>
+        <li><a href="#quickstart" class="nav-link">3. Quick Start (60s)</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">CLI Reference</div>
+      <ul class="nav-list">
+        <li><a href="#cli-install" class="nav-link">Installation & Setup</a></li>
+        <li><a href="#cli-scan" class="nav-link">Single URL Scan</a></li>
+        <li><a href="#cli-batch" class="nav-link">Batch & Sitemap Crawl</a></li>
+        <li><a href="#cli-formats" class="nav-link">Report Exports</a></li>
+        <li><a href="#cli-gate" class="nav-link">CI/CD Gating</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">SDK Reference</div>
+      <ul class="nav-list">
+        <li><a href="#sdk-install" class="nav-link">SDK Installation</a></li>
+        <li><a href="#sdk-audit" class="nav-link">High-Level audit() API</a></li>
+        <li><a href="#sdk-modular" class="nav-link">scan → lint → score</a></li>
+        <li><a href="#sdk-batch" class="nav-link">Batch & Sitemaps</a></li>
+        <li><a href="#sdk-types" class="nav-link">TypeScript Types</a></li>
+      </ul>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-title">Best Practices</div>
+      <ul class="nav-list">
+        <li><a href="#recipes" class="nav-link">Production Recipes</a></li>
+        <li><a href="#checklist" class="nav-link">Grade A Checklist</a></li>
+        <li><a href="#troubleshooting" class="nav-link">Troubleshooting & FAQ</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- Main Content Container -->
+  <main class="content">
+
+    <!-- Hero Header -->
+    <header class="hero">
+      <div class="badges">
+        <a href="https://webmcpworld.com" class="badge badge-primary" target="_blank">🌐 webmcpworld.com</a>
+        <a href="https://www.npmjs.com/package/webmcp-validator-sdk" class="badge" target="_blank">📦 npm v0.1.1</a>
+        <span class="badge">⚡ TypeScript 5.7</span>
+        <span class="badge">🤖 W3C WebMCP Draft</span>
+        <span class="badge">🛡️ MIT License</span>
+      </div>
+      <h1 class="hero-title">WebMCP Developer Guide & Toolkit Reference</h1>
+      <p class="hero-subtitle">
+        The definitive guide to scanning, validating, and scoring WebMCP AI agent capabilities on modern websites using the official SDK and CLI.
+      </p>
+    </header>
+
+    <!-- 1. Overview -->
+    <section id="overview">
+      <h2>🌐 1. Overview & Core Concept</h2>
+      <p>
+        The <strong>W3C WebMCP (Web Model Context Protocol)</strong> standard empowers web applications to expose structured tools and actions directly to browser-based AI agents (such as Google Gemini, Claude, and OpenAI Operator).
+      </p>
+      <div class="grid">
+        <div class="card">
+          <div class="card-icon">📄</div>
+          <div class="card-title">Declarative Forms</div>
+          <div class="card-desc">HTML forms annotated with <code>toolname</code>, <code>tooldescription</code>, and <code>toolaction</code> attributes for zero-JS agent interactions.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <div class="card-title">Imperative JS API</div>
+          <div class="card-desc">Runtime registration via <code>navigator.modelContext.registerTool()</code> for rich client-side SPAs.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🧭</div>
+          <div class="card-title">Agent Discovery</div>
+          <div class="card-desc">Machine-readable manifests (<code>/.well-known/webmcp</code>), <code>/llms.txt</code>, and crawler directives in <code>/robots.txt</code>.</div>
+        </div>
+        <div class="card">
+          <div class="card-icon">🧠</div>
+          <div class="card-title">Chrome Built-in AI</div>
+          <div class="card-desc">Client-side Gemini Nano Prompt API support via <code>window.ai.languageModel</code> for local inference.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Architecture -->
+    <section id="architecture">
+      <h2>🏗️ 2. Ecosystem Architecture</h2>
+      <p>
+        The WebMCP Validator operates as a 4-stage pipeline running on headless Chromium:
+      </p>
+      <div class="card" style="font-family: var(--font-mono); font-size: 13px; line-height: 1.8;">
+        <strong>[Target URL]</strong><br>
+        &nbsp;&nbsp;↳ <strong>1. Discovery Engine:</strong> Headless Playwright scan (DOM forms, navigator.modelContext, manifests, robots.txt, llms.txt)<br>
+        &nbsp;&nbsp;↳ <strong>2. Linter Engine:</strong> 11 Built-in validation rules (IMP-001, TQ-001, BP-001, SEC-001, DISC-001, etc.)<br>
+        &nbsp;&nbsp;↳ <strong>3. Scorer Model:</strong> 100-point rubric across 6 categories mapped to letter grades (A through F)<br>
+        &nbsp;&nbsp;↳ <strong>4. Exporter Engine:</strong> Terminal tables, standalone HTML, JSON, Markdown, SARIF 2.1.0, and JUnit XML
+      </div>
+    </section>
+
+    <!-- 3. Quickstart -->
+    <section id="quickstart">
+      <h2>🚀 3. Quick Start (60 Seconds)</h2>
+      <p>Run your first scan immediately without installing any packages:</p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span>Terminal (npx zero-install)</span>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText('npx webmcp-validator-cli scan https://webmcpworld.com')">Copy</button>
+        </div>
+        <pre><code>npx webmcp-validator-cli scan https://webmcpworld.com</code></pre>
+      </div>
+
+      <p>Or install the programmatic SDK in your project:</p>
+      
+      <div class="code-container">
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText('npm install webmcp-validator-sdk')">Copy</button>
+        </div>
+        <pre><code>npm install webmcp-validator-sdk</code></pre>
+      </div>
+
+      <div class="code-container">
+        <div class="code-header">
+          <span>audit.js (ESM)</span>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText(`import { WebMCPValidator } from 'webmcp-validator-sdk';\n\nconst report = await WebMCPValidator.audit('https://webmcpworld.com');\nconsole.log(\`Score: \${report.overallScore}/100 (Grade \${report.grade})\`);\nconsole.log(\`Tools Found: \${report.toolCount}\`);`)">Copy</button>
+        </div>
+        <pre><code>import { WebMCPValidator } from 'webmcp-validator-sdk';
+
+const report = await WebMCPValidator.audit('https://webmcpworld.com');
+
+console.log(`Score: ${report.overallScore}/100 (Grade ${report.grade})`);
+console.log(`Tools Found: ${report.toolCount}`);
+console.log(`Passed: ${report.passed}`);</code></pre>
+      </div>
+    </section>
+
+    <!-- 4. CLI Guide -->
+    <section id="cli-install">
+      <h2>🛠️ 4. CLI Guide (`webmcp-validator-cli`)</h2>
+      
+      <h3>Global Installation</h3>
+      <p>To use short command aliases (<code>webmcp</code> or <code>webmcp-validator</code>) system-wide:</p>
+      <div class="code-container">
+        <div class="code-header">
+          <span>Terminal</span>
+          <button class="copy-btn" onclick="navigator.clipboard.writeText('npm install -g webmcp-validator-cli')">Copy</button>
+        </div>
+        <pre><code>npm install -g webmcp-validator-cli</code></pre>
+      </div>
+
+      <h3 id="cli-scan">Single URL Auditing (`scan`)</h3>
+      <div class="code-container">
+        <div class="code-header"><span>CLI Commands</span></div>
+        <pre><code># Interactive scan with pretty diagnostic terminal table
+webmcp scan https://webmcpworld.com
+
+# Audit local dev server with mobile viewport emulation
+webmcp scan http://localhost:3000 --mobile
+
+# Speed up scans by skipping image and media assets
+webmcp scan https://example.com --block-media
+
+# Set custom timeout (milliseconds)
+webmcp scan https://example.com --timeout 30000</code></pre>
+      </div>
+
+      <h3 id="cli-batch">Batch & Sitemap Crawling (`batch`)</h3>
+      <div class="code-container">
+        <div class="code-header"><span>Batch Commands</span></div>
+        <pre><code># Audit multiple explicit URLs concurrently
+webmcp batch https://example.com https://example.com/docs https://example.com/pricing
+
+# Crawl an XML sitemap (up to 25 pages, 4 concurrent workers)
+webmcp batch --sitemap https://example.com/sitemap.xml --concurrency 4 --limit 25
+
+# Read URLs from a line-separated text file and save HTML report
+webmcp batch -f urls.txt -o site-audit.html</code></pre>
+      </div>
+
+      <h3 id="cli-formats">Report Export Formats</h3>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Format</th>
+              <th>Flag / Option</th>
+              <th>Output Target</th>
+              <th>Primary Use Case</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>pretty</code></td>
+              <td><code>--format pretty</code></td>
+              <td>stdout</td>
+              <td>Interactive developer terminal feedback</td>
+            </tr>
+            <tr>
+              <td><code>html</code></td>
+              <td><code>-o report.html</code></td>
+              <td>File</td>
+              <td>Standalone visual dashboard for stakeholders</td>
+            </tr>
+            <tr>
+              <td><code>json</code></td>
+              <td><code>--format json</code></td>
+              <td>stdout / File</td>
+              <td>Programmatic CI/CD ingestion and scripting</td>
+            </tr>
+            <tr>
+              <td><code>markdown</code></td>
+              <td><code>--format markdown</code></td>
+              <td>stdout / File</td>
+              <td>GitHub Pull Request summaries & descriptions</td>
+            </tr>
+            <tr>
+              <td><code>sarif</code></td>
+              <td><code>-o results.sarif</code></td>
+              <td>File</td>
+              <td>GitHub Security Tab / CodeQL code scanning alerts</td>
+            </tr>
+            <tr>
+              <td><code>junit</code></td>
+              <td><code>-o junit.xml</code></td>
+              <td>File</td>
+              <td>GitLab CI / CircleCI native test runner reporting</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 id="cli-gate">CI/CD Quality Gating (`--fail-under`)</h3>
+      <p>Exit with status code <code>0</code> on success, or <code>1</code> if the AI readiness score fails to meet the threshold:</p>
+      <div class="code-container">
+        <div class="code-header"><span>CI Threshold Enforcement</span></div>
+        <pre><code># Break build if score is below 80
+webmcp scan https://example.com --fail-under 80
+
+# Require Grade A (score >= 90) for production releases
+webmcp scan https://example.com --fail-under 90</code></pre>
+      </div>
+    </section>
+
+    <!-- 5. SDK Guide -->
+    <section id="sdk-install">
+      <h2>💻 5. Programmatic SDK Guide (`webmcp-validator-sdk`)</h2>
+      
+      <h3 id="sdk-audit">One-Line Audit (`WebMCPValidator.audit`)</h3>
+      <div class="code-container">
+        <div class="code-header"><span>TypeScript / JavaScript</span></div>
+        <pre><code>import { WebMCPValidator } from 'webmcp-validator-sdk';
+
+const report = await WebMCPValidator.audit('https://webmcpworld.com', {
+  scanner: {
+    headless: true,
+    timeoutMs: 20000,
+    blockMedia: true,
+  },
+  scorer: {
+    passingScore: 80,
+  },
+});
+
+console.log(`Grade: ${report.grade} (${report.overallScore}/100)`);
+console.log(`Passed: ${report.passed}`);</code></pre>
+      </div>
+
+      <h3 id="sdk-modular">Modular Step-by-Step Pipeline</h3>
+      <p>For custom pipelines requiring custom pre-processing or AST introspection:</p>
+      <div class="code-container">
+        <div class="code-header"><span>Modular Pipeline</span></div>
+        <pre><code>import { WebMCPValidator } from 'webmcp-validator-sdk';
+
+// 1. Scan target using headless Chromium
+const detection = await WebMCPValidator.scan('https://webmcpworld.com');
+console.log(`Discovered ${detection.tools.length} tool definitions`);
+
+// 2. Evaluate against linter rules
+const lintResult = await WebMCPValidator.lint(detection, {
+  rules: ['IMP-001', 'TQ-001', 'SEC-001', 'SEC-002'],
+});
+console.log(`Errors: ${lintResult.summary.errors}`);
+
+// 3. Calculate score & grade
+const report = WebMCPValidator.score(detection, lintResult, {
+  passingScore: 85,
+});
+
+// 4. Export report directly to disk
+await WebMCPValidator.saveReport(report, './audit.html');</code></pre>
+      </div>
+
+      <h3 id="sdk-batch">Batch & Sitemap Audits</h3>
+      <div class="code-container">
+        <div class="code-header"><span>Batch SDK</span></div>
+        <pre><code>import { WebMCPValidator } from 'webmcp-validator-sdk';
+
+// 1. Discover URLs from sitemap
+const urls = await WebMCPValidator.crawlSitemap('https://webmcpworld.com/sitemap.xml', {
+  maxUrls: 20,
+});
+
+// 2. Run batch audit with concurrency pooling
+const result = await WebMCPValidator.batchAudit({
+  urls,
+  concurrency: 4,
+  failUnder: 80,
+});
+
+console.log(`Average Score: ${result.averageScore} (Grade ${result.overallGrade})`);
+await WebMCPValidator.saveBatchReport(result, './site-audit.html');</code></pre>
+      </div>
+
+      <h3 id="sdk-types">Key TypeScript Interfaces</h3>
+      <div class="code-container">
+        <div class="code-header"><span>Type Definitions</span></div>
+        <pre><code>export interface WebMCPReadinessReport {
+  url: string;
+  timestamp: string;
+  overallScore: number;     // 0 - 100
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  passed: boolean;
+  toolCount: number;
+  categories: Record<ReadinessCategory, CategoryScore>;
+  checklist: ChecklistItem[];
+  lintSummary: LintSummary;
+  tools: ToolDeclaration[];
+  durationMs: number;
+}
+
+export type ReadinessCategory =
+  | 'declarative'
+  | 'infrastructure'
+  | 'agent-access'
+  | 'imperative'
+  | 'discovery-manifest'
+  | 'chrome-ai';</code></pre>
+      </div>
+    </section>
+
+    <!-- 6. Production Recipes -->
+    <section id="recipes">
+      <h2>🍳 6. Production Integration Recipes</h2>
+
+      <h3>Recipe: GitHub Actions Automated PR Gating</h3>
+      <p>Save as <code>.github/workflows/webmcp-audit.yml</code>:</p>
+      <div class="code-container">
+        <div class="code-header"><span>.github/workflows/webmcp-audit.yml</span></div>
+        <pre><code>name: WebMCP Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npx playwright install --with-deps chromium
+      - name: Audit Staging Server
+        run: |
+          npx webmcp-validator-cli scan https://staging.example.com \
+            --fail-under 80 \
+            --format markdown -o ./audit.md \
+            --format sarif -o ./results.sarif
+      - name: Append to GitHub Step Summary
+        if: always()
+        run: cat ./audit.md >> $GITHUB_STEP_SUMMARY
+      - name: Upload Security Alerts
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: results.sarif</code></pre>
+      </div>
+    </section>
+
+    <!-- 7. Checklist -->
+    <section id="checklist">
+      <h2>📋 7. WebMCP Compliance Checklist (Grade A)</h2>
+      <p>Follow this checklist to achieve an AI Readiness Score of 90+ (Grade A):</p>
+      
+      <ul class="checklist">
+        <li class="checklist-item">
+          <span class="check-icon">✔</span>
+          <div>
+            <strong>Declarative Forms:</strong> HTML <code>&lt;form&gt;</code> tags include <code>toolname</code>, <code>tooldescription</code>, and <code>toolaction</code> attributes.
+          </div>
+        </li>
+        <li class="checklist-item">
+          <span class="check-icon">✔</span>
+          <div>
+            <strong>Infrastructure:</strong> Delivered over HTTPS, HTTP 200 OK, response time under 1,500ms, and valid <code>/robots.txt</code> and <code>/sitemap.xml</code>.
+          </div>
+        </li>
+        <li class="checklist-item">
+          <span class="check-icon">✔</span>
+          <div>
+            <strong>Agent Permissions:</strong> AI agent bots (<code>GPTBot</code>, <code>ClaudeBot</code>, etc.) are allowed; <code>/llms.txt</code> directives file present.
+          </div>
+        </li>
+        <li class="checklist-item">
+          <span class="check-icon">✔</span>
+          <div>
+            <strong>Imperative JavaScript:</strong> <code>navigator.modelContext.registerTool()</code> configured with parameter schema and safe mutation hints (<code>consequentialHint: true</code>).
+          </div>
+        </li>
+        <li class="checklist-item">
+          <span class="check-icon">✔</span>
+          <div>
+            <strong>Discovery Manifest:</strong> Accessible at <code>/.well-known/webmcp</code> containing valid JSON tool schemas.
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <!-- 8. FAQ -->
+    <section id="troubleshooting">
+      <h2>❓ 8. Troubleshooting & FAQ</h2>
+      <div class="card" style="margin-bottom: 12px;">
+        <strong>Q: Why does <code>npx webmcp-validator</code> return 404?</strong><br>
+        <span style="color: var(--text-secondary); font-size: 14px;">The registered package name on npm is <code>webmcp-validator-cli</code>. Use <code>npx webmcp-validator-cli scan &lt;url&gt;</code>. When installed globally via <code>npm i -g webmcp-validator-cli</code>, both <code>webmcp</code> and <code>webmcp-validator</code> work.</span>
+      </div>
+      <div class="card" style="margin-bottom: 12px;">
+        <strong>Q: How do I run this in Docker or a headless CI Linux server?</strong><br>
+        <span style="color: var(--text-secondary); font-size: 14px;">Install Chromium system dependencies using <code>npx playwright install --with-deps chromium</code> before running scans.</span>
+      </div>
+      <div class="card">
+        <strong>Q: How do I scan client-rendered React/Next.js pages?</strong><br>
+        <span style="color: var(--text-secondary); font-size: 14px;">The validator runs full headless Chromium and waits for network idle. If tools register late, increase the timeout using <code>--timeout 20000</code>.</span>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Smooth scrolling & active link highlighting
+    const links = document.querySelectorAll('.nav-link');
+    const sections = document.querySelectorAll('section');
+
+    window.addEventListener('scroll', () => {
+      let current = '';
+      sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        if (pageYOffset >= sectionTop - 100) {
+          current = section.getAttribute('id');
+        }
+      });
+
+      links.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === `#${current}`) {
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
